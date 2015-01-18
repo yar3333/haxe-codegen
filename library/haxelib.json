@@ -1,0 +1,11 @@
+{
+  "name": "extgen",
+  "license": "LGPL",
+  "tags": ["macro"],
+  "description": "A macro tool to generate externals from existing haxe source codes.",
+  "contributors": ["yar3333"],
+  "releasenote": "Init.",
+  "version": "1.0.0",
+  "url": "https://bitbucket.org/yar3333/haxe-extgen",
+  "dependencies": {}
+}
