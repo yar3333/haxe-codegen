@@ -66,8 +66,8 @@ class HaxePrinter {
 
 	public function printTypePath(tp:TypePath) return
 		(tp.pack.length > 0 ? tp.pack.join(".") + "." : "")
-		+ tp.name
-		+ (tp.sub != null ? '.${tp.sub}' : "")
+		+ (tp.name != "StdTypes" ? tp.name : "")
+		+ (tp.sub != null ? (tp.name != "StdTypes" ? "." : "") + '${tp.sub}' : "")
 		+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
 
 	// TODO: check if this can cause loops
