@@ -1,9 +1,9 @@
-package haxe.macro;
+package extgen;
 
 import haxe.macro.Expr;
 using Lambda;
 
-class Printer {
+class HaxePrinter {
 	var tabs:String;
 	var tabString:String;
 
@@ -95,7 +95,7 @@ class Printer {
 	}
 
 	public function printField(field:Field) return
-		(field.doc != null && field.doc != "" ? "/**\n" + tabs + tabString + StringTools.replace(field.doc, "\n", "\n" + tabs + tabString) + "\n" + tabs + "**/\n" + tabs : "")
+		printDoc(field.doc)
 		+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join('\n$tabs') + '\n$tabs' : "")
 		+ (field.access != null && field.access.length > 0 ? field.access.map(printAccess).join(" ") + " " : "")
 		+ switch(field.kind) {
@@ -210,7 +210,7 @@ class Printer {
 				case TDEnum:
 					"enum " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " {\n"
 					+ [for (field in t.fields)
-						tabs + (field.doc != null && field.doc != "" ? "/**\n" + tabs + tabString + StringTools.replace(field.doc, "\n", "\n" + tabs + tabString) + "\n" + tabs + "**/\n" + tabs : "")
+						tabs + printDoc(field.doc)
 						+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join(" ") + " " : "")
 						+ (switch(field.kind) {
 							case FVar(t, _): field.name + opt(t, printComplexType, ":");
@@ -270,4 +270,11 @@ class Printer {
 	}
 
 	function opt<T>(v:T, f:T->String, prefix = "") return v == null ? "" : (prefix + f(v));
+	
+	function printDoc(doc:String) : String
+	{
+		return doc != null && doc != "" 
+			? "\n" + tabs + "/**\n" + tabs + " * " + StringTools.trim(doc).split("\n").map(StringTools.trim).join("\n" + tabs + " * ") + "\n" + tabs + " */\n" + tabs
+			: "";
+	}
 }
