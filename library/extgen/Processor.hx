@@ -14,49 +14,68 @@ using StringTools;
 
 class Processor
 {
-	var toplevelPackage:String;
-	var includeRegex:EReg;
-	var excludeRegex:EReg;
+	var topLevelPackage : String;
+	var includeRegex : EReg;
+	var excludeRegex : EReg;
+	var includeTypes : Array<String>;
+	var excludeTypes : Array<String>;
 	
-	public function new(toplevelPackage:String, includeRegex:EReg, excludeRegex:EReg, generator:IGenerator) 
+	var types : Array<Type>;
+	
+	public function new(topLevelPackage:String, includeRegex:EReg, excludeRegex:EReg, includeTypes:Array<String>, excludeTypes:Array<String>, generator:IGenerator) 
 	{
-		this.toplevelPackage = toplevelPackage;
+		this.topLevelPackage = topLevelPackage != null ? topLevelPackage : "";
 		this.includeRegex = includeRegex;
 		this.excludeRegex = excludeRegex;
+		this.includeTypes = includeTypes != null ? includeTypes.map(function(s) return s.trim()).filter(function(s) return s != "" && !s.startsWith("#")) : [];
+		this.excludeTypes = excludeTypes != null ? excludeTypes.map(function(s) return s.trim()).filter(function(s) return s != "" && !s.startsWith("#")) : [];
 		
-		Context.onGenerate(function(types)
+		Context.onGenerate(function(innerTypes)
 		{
+			types = innerTypes;
+			
 			var typeDefs = [];
 			for (type in types)
 			{
 				var r = processType(type);
 				if (r != null) typeDefs.push(r);
 			}
+			
 			generator.generate(typeDefs);
 		});
 	}
 	
-	function processType(type:Type) : TypeDefinitionAndDoc
+	function processType(type:Type) : TypeDefinitionEx
 	{
 		switch (type)
 		{
 			case Type.TInst(t, params):
 				var c = t.get();
 				if (isExcludeType(c)) return null;
+				
+				var fields = c.constructor != null ? [ c.constructor.get() ] : [];
+				fields = fields.concat(c.fields.get());
+				
 				return
 				{
 					doc : c.doc,
+					module : c.module,
 					pack : c.pack,
 					name : c.name,
 					pos : c.pos,
 					meta : c.meta.get(),
-					params : [], //c.params.map(stringToTypeParamDec), // todo
+					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDClass(getTypePath(c.superClass), c.interfaces.map(getTypePath), c.isInterface),
-					fields : c.fields.get()
-						.filter(function(f) return !f.meta.has("noapi"))
-						.map(classFieldToField.bind(false))
-						.concat(c.statics.get().map(classFieldToField.bind(true)))
+					fields : fields
+						.filter(function(f) return !f.meta.has("noapi") && f.isPublic)
+						.map(classFieldToField.bind(c, false))
+						.concat
+						(
+							c.statics.get()
+								.filter(function(f) return !f.meta.has("noapi") && f.isPublic)
+								.map(classFieldToField.bind(c, true))
+						)
 				};
 				
 			case Type.TEnum(t, params):
@@ -65,11 +84,12 @@ class Processor
 				return
 				{
 					doc : c.doc,
+					module : c.module,
 					pack : c.pack,
 					name : c.name,
 					pos : c.pos,
 					meta : c.meta.get(),
-					params : [], // todo
+					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDEnum,
 					fields : c.constructs
@@ -84,11 +104,12 @@ class Processor
 				return
 				{
 					doc : c.doc,
+					module : c.module,
 					pack : c.pack,
 					name : c.name,
 					pos : c.pos,
 					meta : c.meta.get(),
-					params : [], // todo
+					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
 					fields : null
@@ -100,11 +121,12 @@ class Processor
 				return
 				{
 					doc : c.doc,
+					module : c.module,
 					pack : c.pack,
 					name : c.name,
 					pos : c.pos,
 					meta : c.meta.get(),
-					params : [], // todo
+					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
 					fields : [] //c.constructs.map(enumFieldToField).array()
@@ -118,8 +140,15 @@ class Processor
 	function isExcludeType(c:{ pack:Array<String>, name:String, meta:MetaAccess }) : Bool
 	{
 		var path = c.pack.concat([c.name]).join(".");
+		
+		if (topLevelPackage != "" && !path.startsWith(topLevelPackage+".")) return false;
+		
 		if (includeRegex != null && !includeRegex.match(path)) return true;
 		if (excludeRegex != null &&  excludeRegex.match(path)) return true;
+		
+		if (includeTypes.length > 0 && !includeTypes.exists(function(t) return path == t || path.startsWith(t + "."))) return true;
+		if (excludeTypes.length > 0 &&  excludeTypes.exists(function(t) return path == t || path.startsWith(t + "."))) return true;
+		
 		return c.meta.has("noapi");
 	}
 	
@@ -143,25 +172,24 @@ class Processor
 		return TypeParam.TPType(typeToComplexType(param.t));
 	}
 	
-	/*
-	function stringToTypeParamDec(s:String) : haxe.macro.TypeParamDecl
+	
+	function typeParameterToTypeParamDec(t:TypeParameter) : TypeParamDecl
 	{
 		return
 		{
-			name:s,
+			name:t.name,
 			params:null,
 			constraints:null
 		};
 	}
-	*/
 	
-	function classFieldToField(isStatic:Bool, f:ClassField) : Field
+	function classFieldToField(klass:ClassType, isStatic:Bool, f:ClassField) : Field
 	{
 		return
 		{
 			name : f.name,
 			doc : f.doc,
-			access : getAccesses(isStatic, f),
+			access : getAccesses(klass, isStatic , f),
 			kind : getFieldKind(f),
 			pos : Context.currentPos(),
 			meta : f.meta.get()
@@ -191,14 +219,25 @@ class Processor
 		};
 	}
 	
-	function getAccesses(isStatic:Bool, f:ClassField) : Array<Access>
+	function getAccesses(klass:ClassType, isStatic:Bool, f:ClassField) : Array<Access>
 	{
 		var r = [];
-		//if (f.isOverride) r.push(Access.AOverride);
 		if (f.isPublic) r.push(Access.APublic);
 		else            r.push(Access.APrivate);
 		if (isStatic) r.push(Access.AStatic);
-		//if (f.set.match(Rights.RDynamic)) r.push(Access.ADynamic);
+		
+		var superClass = klass != null && klass.superClass != null ? klass.superClass.t.get() : null;
+		while (superClass != null)
+		{
+			if (superClass.fields.get().exists(function(f2) return f2.name == f.name))
+			{
+				r.push(Access.AOverride);
+				break;
+			}
+			if (superClass.superClass == null) break;
+			superClass = superClass.superClass.t.get();
+		}
+		
 		return r;
 	}
 	
@@ -215,7 +254,7 @@ class Processor
 							args : args.map(toFunctionArg),
 							ret: typeToComplexType(ret),
 							expr: null,
-							params: [] //Array<TypeParamDecl>
+							params: f.params.map(typeParameterToTypeParamDec)
 						});
 						
 					case _: 
@@ -223,7 +262,39 @@ class Processor
 				}
 				
 			case FieldKind.FVar(read, write):
-				FieldType.FVar(typeToComplexType(f.type));
+				var sRead = readVarAccessToString(read);
+				var sWrite = writeVarAccessToString(write);
+				
+				if (sRead == "default" && sWrite == "default")
+				{
+					FieldType.FVar(typeToComplexType(f.type));
+				}
+				else
+				{
+					FieldType.FProp(sRead, sWrite, typeToComplexType(f.type));
+				}
+		}
+	}
+	
+	function readVarAccessToString(a:VarAccess) : String
+	{
+		return switch (a)
+		{
+			case VarAccess.AccNo: "null";
+			case VarAccess.AccCall: "get";
+			case VarAccess.AccNever: "never";
+			case _: "default";
+		}
+	}
+	
+	function writeVarAccessToString(a:VarAccess) : String
+	{
+		return switch (a)
+		{
+			case VarAccess.AccNo: "null";
+			case VarAccess.AccCall: "set";
+			case VarAccess.AccNever: "never";
+			case _: "default";
 		}
 	}
 	
@@ -243,8 +314,8 @@ class Processor
 		{
 			case Type.TAnonymous(a):
 				var fields = a.get().fields
-					.filter(function(f) return !f.meta.has("noapi"))
-					.map(classFieldToField.bind((false)))
+					.filter(function(f) return !f.meta.has("noapi") && f.isPublic)
+					.map(classFieldToField.bind(null, false))
 					.map(function(f) { f.doc = f.doc; return f; });
 				for (f in fields) f.access = f.access.filter(function(a) return a != Access.APublic && a != Access.APrivate);
 				return ComplexType.TAnonymous(fields);
@@ -254,59 +325,20 @@ class Processor
 		}
 	}
 	
-	/*function getFieldInfo(cf:haxe.rtti.ClassField)  :FieldInfo
+	function getClass(klassPath:TypePath) : ClassType
 	{
-		var modifiers = {
-			isInline: false,
-			isDynamic: false
-		}
-		var isMethod = false;
-		var get = "default";
-		var set = "default";
-		switch (cf.set) {
-			case RNo:
-				set = "null";
-			case RCall(_):
-				set = "set";
-			case RMethod:
-				isMethod = true;
-			case RDynamic:
-				set = "dynamic";
-				isMethod = true;
-				modifiers.isDynamic = true;
-			default:
-		}
-		switch (cf.get) {
-			case RNo:
-				get = "null";
-			case RCall(_):
-				get = "get";
-			case RDynamic:
-				get = "dynamic";
-			case RInline:
-				modifiers.isInline = true;
-			default:
-		}
-		function varOrProperty() {
-			return if (get == "default" && set == "default") {
-				Variable;
-			} else {
-				Property(get, set);
+		if (klassPath == null) return null;
+		
+		for (type in types)
+		{
+			switch (type)
+			{
+				case Type.TInst(t, params):
+					var c = t.get();
+					if (c.pack.concat([c.name]).join(".") == klassPath.pack.concat([klassPath.name]).join(".")) return c;
+				case _:
 			}
 		}
-		var kind = if (isMethod || modifiers.isInline) {
-			switch (cf.type) {
-				case CFunction(args, ret):
-					Method(args, ret);
-				default:
-					varOrProperty();
-			}
-		} else {
-			varOrProperty();
-		}
-		return {
-			kind: kind,
-			modifiers: modifiers
-		}
-	}*/
+		return null;
+	}
 }

@@ -2,8 +2,9 @@ package extgen;
 
 import haxe.macro.Expr;
 
-typedef TypeDefinitionAndDoc =
+typedef TypeDefinitionEx =
 {>TypeDefinition,
 
-	doc:String
+	doc:String,
+	module:String
 }

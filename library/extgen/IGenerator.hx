@@ -4,5 +4,5 @@ import haxe.macro.Expr;
 
 interface IGenerator
 {
-	public function generate(types:Array<TypeDefinitionAndDoc>) : Void;
+	public function generate(types:Array<TypeDefinitionEx>) : Void;
 }
