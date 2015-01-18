@@ -3,7 +3,7 @@ package extgen;
 import haxe.macro.Expr;
 using Lambda;
 
-class HaxePrinter {
+class TypeScriptPrinter {
 	var tabs:String;
 	var tabString:String;
 
@@ -99,9 +99,14 @@ class HaxePrinter {
 		+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join('\n$tabs') + '\n$tabs' : "")
 		+ (field.access != null && field.access.length > 0 ? field.access.map(printAccess).join(" ") + " " : "")
 		+ switch(field.kind) {
-		  case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-		  case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-		  case FFun(func): 'function ${field.name}' + printFunction(func);
+		  case FVar(t, eo): field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+		  case FProp(get, set, t, eo):
+				var a = [];
+				if (get == "get") a.push("get_" + field.name + "()"                                       + opt(t, printComplexType, " : "));
+				if (set == "set") a.push("set_" + field.name + "(v" + opt(t, printComplexType, ":") + ")" + opt(t, printComplexType, " : "));
+				if (get == "default" || set == "default") a.push(field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = "));
+				a.join("\n " +tabs);
+		  case FFun(func): field.name + printFunction(func);
 		}
 
 	public function printTypeParamDecl(tpd:TypeParamDecl) return
@@ -220,7 +225,7 @@ class HaxePrinter {
 					].join("\n")
 					+ "\n}";
 				case TDStructure:
-					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " =\n{\n"
+					"interface " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
 					+ [for (f in t.fields) {
 						tabs + printField(f) + ";";
 					}].join("\n")
@@ -240,13 +245,12 @@ class HaxePrinter {
 					}].join("\n")
 					+ "\n}";
 				case TDAlias(ct):
-					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " ="
-					+ (switch(ct) {
-						case TExtend(tpl, fields): " " + printExtension(tpl, fields);
-						case TAnonymous(fields): "\n" + printStructure(fields);
-						case _: " " + printComplexType(ct);
-					})
-					+ ";";
+					var s = "interface " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "");
+					switch(ct) {
+						case TExtend(tpl, fields): s + " extends " + printExtension(tpl, fields) + ";";
+						case TAnonymous(fields): s + "\n" + printStructure(fields);
+						case _: s + " = " + printComplexType(ct) + ";";
+					};
 				case TDAbstract(tthis, from, to):
 					"abstract " + t.name
 					+ (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")

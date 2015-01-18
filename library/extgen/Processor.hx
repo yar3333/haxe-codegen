@@ -30,6 +30,16 @@ class Processor
 		this.includeTypes = includeTypes != null ? includeTypes.map(function(s) return s.trim()).filter(function(s) return s != "" && !s.startsWith("#")) : [];
 		this.excludeTypes = excludeTypes != null ? excludeTypes.map(function(s) return s.trim()).filter(function(s) return s != "" && !s.startsWith("#")) : [];
 		
+		this.excludeTypes.push("StdTypes.Float");
+		this.excludeTypes.push("StdTypes.Int");
+		this.excludeTypes.push("StdTypes.Void");
+		this.excludeTypes.push("StdTypes.Bool");
+		this.excludeTypes.push("StdTypes.Null");
+		this.excludeTypes.push("StdTypes.Dynamic");
+		this.excludeTypes.push("StdTypes.Iterator");
+		this.excludeTypes.push("StdTypes.Iterable");
+		this.excludeTypes.push("StdTypes.ArrayAccess");
+		
 		Context.onGenerate(function(innerTypes)
 		{
 			types = innerTypes;
@@ -40,6 +50,19 @@ class Processor
 				var r = processType(type);
 				if (r != null) typeDefs.push(r);
 			}
+			
+			Tools.mapBaseTypes(typeDefs,
+			[
+				"StdTypes.Float" => "Float",
+				"StdTypes.Int" => "Int",
+				"StdTypes.Void" => "Void",
+				"StdTypes.Bool" => "Bool",
+				"StdTypes.Null" => "Null",
+				"StdTypes.Dynamic" => "Dynamic",
+				"StdTypes.Iterator" => "Iterator",
+				"StdTypes.Iterable" => "Iterable",
+				"StdTypes.ArrayAccess" => "ArrayAccess"
+			]);
 			
 			generator.generate(typeDefs);
 		});

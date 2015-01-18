@@ -5,16 +5,17 @@ using StringTools;
 
 class ExtGen
 {
-	public static macro function generate(generatorName:String, outDir:String, ?topLevelPackage:String, ?include:String, ?exclude:String) : Void
+	public static macro function generate(generatorName:String, outPath:String, ?topLevelPackage:String, ?include:String, ?exclude:String) : Void
 	{
 		var generator = switch (generatorName)
 		{
-			case "haxe-extern": new extgen.GeneratorHaxeExtern(outDir);
-			case _: Context.fatalError("Unknow generator '" + generatorName + "'. Supported values: 'haxe-extern'.", Context.currentPos());
+			case "haxe-extern": new extgen.HaxeExternGenerator(outPath);
+			case "typescript-extern": new extgen.TypeScriptExternGenerator(outPath);
+			case _: Context.fatalError("Unknow generator '" + generatorName + "'. Supported values: 'haxe-extern', 'typescript-extern'.", Context.currentPos());
 		};
 		
 		Lib.println("generator: " + generatorName);
-		Lib.println("outDir: " + outDir);
+		Lib.println("outPath: " + outPath);
 		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
 		Lib.println("include: " + (include != null ? include : "not specified"));
 		Lib.println("exclude: " + (exclude != null ? exclude : "not specified"));
