@@ -240,11 +240,11 @@ class HaxePrinter {
 					}].join("\n")
 					+ "\n}";
 				case TDAlias(ct):
-					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " = "
+					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " ="
 					+ (switch(ct) {
-						case TExtend(tpl, fields): printExtension(tpl, fields);
-						case TAnonymous(fields): printStructure(fields);
-						case _: printComplexType(ct);
+						case TExtend(tpl, fields): " " + printExtension(tpl, fields);
+						case TAnonymous(fields): "\n" + printStructure(fields);
+						case _: " " + printComplexType(ct);
 					})
 					+ ";";
 				case TDAbstract(tthis, from, to):

@@ -1,15 +1,13 @@
-package extgen;
-
 import neko.Lib;
 import haxe.macro.Context;
 
-class Macro
+class ExtGen
 {
 	public static macro function generate(generatorName:String, outDir:String, ?toplevelPackage:String, ?includeRegex:String, ?excludeRegex:String) : Void
 	{
 		var generator = switch (generatorName)
 		{
-			case "haxe-extern": new GeneratorHaxeExtern(outDir);
+			case "haxe-extern": new extgen.GeneratorHaxeExtern(outDir);
 			case _: Context.fatalError("Unknow generator '" + generatorName + "'. Supported values: 'haxe-extern'.", Context.currentPos());
 		};
 		
@@ -19,7 +17,7 @@ class Macro
 		Lib.println("includeRegex: " + (includeRegex != null ? includeRegex : "not specified"));
 		Lib.println("excludeRegex: " + (excludeRegex != null ? excludeRegex : "not specified"));
 		
-		new Processor
+		new extgen.Processor
 		(
 			toplevelPackage,
 			includeRegex != null ? new EReg(includeRegex, "") : null,
