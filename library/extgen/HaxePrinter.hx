@@ -118,7 +118,7 @@ class HaxePrinter {
 	public function printFunction(func:Function) return
 		(func.params.length > 0 ? "<" + func.params.map(printTypeParamDecl).join(", ") + ">" : "")
 		+ "(" + func.args.map(printFunctionArg).join(", ") + ")"
-		+ opt(func.ret, printComplexType, ":")
+		+ opt(func.ret, printComplexType, " : ")
 		+ opt(func.expr, printExpr, " ");
 
 	public function printVar(v:Var) return
@@ -208,7 +208,7 @@ class HaxePrinter {
 			(printPackage && t.pack.length > 0 && t.pack[0] != "" ? "package " + t.pack.join(".") + ";\n" : "") +
 			(t.meta != null && t.meta.length > 0 ? t.meta.map(printMetadata).join(" ") + " " : "") + (t.isExtern ? "extern " : "") + switch (t.kind) {
 				case TDEnum:
-					"enum " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " {\n"
+					"enum " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
 					+ [for (field in t.fields)
 						tabs + printDoc(field.doc)
 						+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join(" ") + " " : "")
@@ -220,7 +220,7 @@ class HaxePrinter {
 					].join("\n")
 					+ "\n}";
 				case TDStructure:
-					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " = {\n"
+					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " =\n{\n"
 					+ [for (f in t.fields) {
 						tabs + printField(f) + ";";
 					}].join("\n")
@@ -229,7 +229,7 @@ class HaxePrinter {
 					(isInterface ? "interface " : "class ") + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (superClass != null ? " extends " + printTypePath(superClass) : "")
 					+ (interfaces != null ? (isInterface ? [for (tp in interfaces) " extends " + printTypePath(tp)] : [for (tp in interfaces) " implements " + printTypePath(tp)]).join("") : "")
-					+ " {\n"
+					+ "\n{\n"
 					+ [for (f in t.fields) {
 						var fstr = printField(f);
 						tabs + fstr + switch(f.kind) {
@@ -253,7 +253,7 @@ class HaxePrinter {
 					+ (tthis == null ? "" : "(" + printComplexType(tthis) + ")")
 					+ (from == null ? "" : [for (f in from) " from " + printComplexType(f)].join(""))
 					+ (to == null ? "" : [for (t in to) " to " + printComplexType(t)].join(""))
-					+ " {\n"
+					+ "\n{\n"
 					+ [for (f in t.fields) {
 						var fstr = printField(f);
 						tabs + fstr + switch(f.kind) {
