@@ -2,8 +2,7 @@
 
 A macro tool to generate codes (haxe and none-haxe) from existing haxe source codes.
 
-Useful if you want to split your project to several separate-compiled parts
-and you want to haxe api (extern classes) for your code parts commmunication.
+Useful if you split your project into several separate-compiled parts and you want to have common api (extern classes).
 
 ### Usage ###
 Compile your project with "-lib codegen" and "--macro CodeGen.generate(generatorName,outPath,?topLevelPackage,?filterFile,?mapperFile)"
