@@ -32,7 +32,7 @@ class CodeGen
 		generate(new codegen.TypeScriptExternGenerator(outPath), topLevelPackage, filterFile, mapperFile);
 	}
 	
-	static function generate(generator:IGenerator, outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
+	static function generate(generator:IGenerator, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
 		if (topLevelPackage != null && topLevelPackage != "") filter.unshift("+" + topLevelPackage);
