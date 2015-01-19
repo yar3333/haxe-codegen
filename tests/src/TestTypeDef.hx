@@ -1,7 +1,11 @@
-package ;
-
-typedef TestTypeDef =
+/*typedef TestTypeDef =
 {
-	var myvar : Int;
 	var mysecVar : String;
+	var myvar : Int;
+};*/
+
+enum TestTypeDef
+{
+	B(test:Int);
+	A;
 }

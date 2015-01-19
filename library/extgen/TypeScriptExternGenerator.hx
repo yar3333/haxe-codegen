@@ -14,17 +14,24 @@ class TypeScriptExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
-		Tools.makeClassesExternAndRemovePriveFields(types);
+		Tools.makeClassesExternAndRemovePrivateFields(types);
 		
-		Tools.mapBaseTypes(types,
-		[
+		new TypeMapper
+		([
 			"Float" => "number",
 			"Int" => "number",
 			"Bool" => "boolean",
 			"Dynamic" => "any",
 			"Void" => "void",
 			"String" => "string"
-		]);
+		])
+		.process(types);
+		
+		new FieldMapper
+		([
+			"new" => "constructor"
+		])
+		.process(types);
 		
 		var blocks = [];
 		

@@ -51,8 +51,8 @@ class Processor
 				if (r != null) typeDefs.push(r);
 			}
 			
-			Tools.mapBaseTypes(typeDefs,
-			[
+			new TypeMapper
+			([
 				"StdTypes.Float" => "Float",
 				"StdTypes.Int" => "Int",
 				"StdTypes.Void" => "Void",
@@ -62,7 +62,8 @@ class Processor
 				"StdTypes.Iterator" => "Iterator",
 				"StdTypes.Iterable" => "Iterable",
 				"StdTypes.ArrayAccess" => "ArrayAccess"
-			]);
+			])
+			.process(typeDefs);
 			
 			generator.generate(typeDefs);
 		});
@@ -226,17 +227,22 @@ class Processor
 			name : f.name,
 			doc : f.doc,
 			access : [],
-			kind : FieldType.FFun
-				({
-					args : switch (f.type)
-							{
-								case Type.TFun(args, ret): args.map(toFunctionArg);
-								case _: [];
-							},
-					ret: null,
-					expr: null,
-					params: []
-				}),
+			kind :
+				switch (f.type)
+				{
+					case Type.TFun(args, ret):
+						FieldType.FFun
+						({
+							args : args.map(toFunctionArg),
+							ret: null,
+							expr: null,
+							params: []
+						});
+					case Type.TEnum(t, params):
+						FieldType.FVar(null);
+					case _:
+						Context.fatalError("Enum field '" + f.name + "' unexpected type '" + f.type + "'.", f.pos);
+				},
 			pos : Context.currentPos(),
 			meta : f.meta.get()
 		};

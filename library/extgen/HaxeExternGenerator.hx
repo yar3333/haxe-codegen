@@ -14,7 +14,7 @@ class HaxeExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
-		Tools.makeClassesExternAndRemovePriveFields(types);
+		Tools.makeClassesExternAndRemovePrivateFields(types);
 		
 		var modules = Tools.separateByModules(types);
 		for (module in modules.keys())
