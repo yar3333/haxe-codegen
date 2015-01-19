@@ -1,4 +1,4 @@
-package extgen;
+package codegen;
 
 import neko.Lib;
 import haxe.macro.Context;

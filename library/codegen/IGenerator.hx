@@ -1,4 +1,4 @@
-package extgen;
+package codegen;
 
 import haxe.macro.Expr;
 

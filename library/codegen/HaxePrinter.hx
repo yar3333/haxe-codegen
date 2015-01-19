@@ -1,10 +1,9 @@
-package extgen;
+package codegen;
 
-import haxe.macro.ComplexTypeTools;
 import haxe.macro.Expr;
 using Lambda;
 
-class TypeScriptPrinter {
+class HaxePrinter {
 	var tabs:String;
 	var tabString:String;
 
@@ -65,58 +64,31 @@ class TypeScriptPrinter {
 		case TPExpr(e): printExpr(e);
 	}
 
-	public function printTypePath(tp:TypePath)
-	{
-		if (tp.pack.length == 0 && tp.name == "Array" && tp.sub == null && tp.params.length==1)
-		{
-			return printTypeParam(tp.params[0]) + "[]";
-		}
-		
-		return
-			(tp.pack.length > 0 ? tp.pack.join(".") + "." : "")
-			+ tp.name
-			+ (tp.sub != null ? '.${tp.sub}' : "")
-			+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
-	}
+	public function printTypePath(tp:TypePath) return
+		(tp.pack.length > 0 ? tp.pack.join(".") + "." : "")
+		+ tp.name
+		+ (tp.sub != null ? '.${tp.sub}' : "")
+		+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
 
 	// TODO: check if this can cause loops
 	public function printComplexType(ct:ComplexType) return switch(ct) {
 		case TPath(tp): printTypePath(tp);
-		case TFunction(args, ret):
-			"(" + (args.length > 0 ? args.mapi(function(i, arg) return "arg" + (args.length > 1 ? Std.string(i) : "") + ":" + printComplexType(arg)).join(", ") : "") + ") => " + printComplexType(ret);
+		case TFunction(args, ret): (args.length>0 ? args.map(printComplexType).join(" -> ") : "Void") + " -> " + printComplexType(ret);
 		case TAnonymous(fields): "{ " + [for (f in fields) printField(f) + "; "].join("") + "}";
 		case TParent(ct): "(" + printComplexType(ct) + ")";
 		case TOptional(ct): "?" + printComplexType(ct);
 		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.map(printField).join(", ")} }';
 	}
 
-	public function printMetadatas(meta:Array<MetadataEntry>, joinStr:String)
-	{
-		return "";
-		//return meta != null && meta.length > 0 ? meta.map(printMetadata).join(joinStr) + joinStr : "";
-	}
-
-	public function printMetadata(meta:MetadataEntry)
-	{
-		return "";
-		/*return
-			'@${meta.name}'
-			+ (meta.params.length > 0 ? '(${printExprs(meta.params,", ")})' : "");*/
-	}
-
-	public function printAccesses(accesses:Array<Access>)
-	{
-		if (accesses == null) return "";
-		var items = accesses.map(printAccess).filter(function(a) return a != null && a != "");
-		if (items.length == 0) return "";
-		return items.join(" ") + " ";
-	}
+	public function printMetadata(meta:MetadataEntry) return
+		'@${meta.name}'
+		+ (meta.params.length > 0 ? '(${printExprs(meta.params,", ")})' : "");
 
 	public function printAccess(access:Access) return switch(access) {
 		case AStatic: "static";
 		case APublic: "public";
 		case APrivate: "private";
-		case AOverride: null;
+		case AOverride: "override";
 		case AInline: "inline";
 		case ADynamic: "dynamic";
 		case AMacro: "macro";
@@ -124,17 +96,12 @@ class TypeScriptPrinter {
 
 	public function printField(field:Field) return
 		printDoc(field.doc)
-		+ printMetadatas(field.meta, "\n" + tabs)
-		+ printAccesses(field.access)
+		+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join('\n$tabs') + '\n$tabs' : "")
+		+ (field.access != null && field.access.length > 0 ? field.access.map(printAccess).join(" ") + " " : "")
 		+ switch(field.kind) {
-		  case FVar(t, eo): field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-		  case FProp(get, set, t, eo):
-				var a = [];
-				if (get == "get") a.push("get_" + field.name + "()"                                       + opt(t, printComplexType, " : "));
-				if (set == "set") a.push("set_" + field.name + "(v" + opt(t, printComplexType, ":") + ")" + opt(t, printComplexType, " : "));
-				if (get == "default" || set == "default") a.push(field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = "));
-				a.join("\n " +tabs);
-		  case FFun(func): field.name + printFunction(func);
+		  case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+		  case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+		  case FFun(func): 'function ${field.name}' + printFunction(func);
 		}
 
 	public function printTypeParamDecl(tpd:TypeParamDecl) return
@@ -143,8 +110,8 @@ class TypeScriptPrinter {
 		+ (tpd.constraints != null && tpd.constraints.length > 0 ? ":(" + tpd.constraints.map(printComplexType).join(", ") + ")" : "");
 
 	public function printFunctionArg(arg:FunctionArg) return
-		  arg.name
-		+ (arg.opt ? "?" : "")
+		(arg.opt ? "?" : "")
+		+ arg.name
 		+ opt(arg.type, printComplexType, ":")
 		+ opt(arg.value, printExpr, " = ");
 
@@ -239,21 +206,21 @@ class TypeScriptPrinter {
 
 		var str = t == null ? "#NULL" :
 			(printPackage && t.pack.length > 0 && t.pack[0] != "" ? "package " + t.pack.join(".") + ";\n" : "") +
-			printMetadatas(t.meta, " ") + (t.isExtern ? (t.pack.length>0 ? "export " : "declare ")  : "") + switch (t.kind) {
+			(t.meta != null && t.meta.length > 0 ? t.meta.map(printMetadata).join(" ") + " " : "") + (t.isExtern ? "extern " : "") + switch (t.kind) {
 				case TDEnum:
 					"enum " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
-					+ t.fields.map(function (field) return
+					+ [for (field in t.fields)
 						tabs + printDoc(field.doc)
-						+ printMetadatas(field.meta, " ")
+						+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join(" ") + " " : "")
 						+ (switch(field.kind) {
 							case FVar(t, _): field.name + opt(t, printComplexType, ":");
 							case FProp(_, _, _, _): throw "FProp is invalid for TDEnum.";
 							case FFun(func): field.name + printFunction(func);
-						})
-					).join(",\n")
+						}) + ";"
+					].join("\n")
 					+ "\n}";
 				case TDStructure:
-					"interface " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
+					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " =\n{\n"
 					+ [for (f in t.fields) {
 						tabs + printField(f) + ";";
 					}].join("\n")
@@ -261,7 +228,7 @@ class TypeScriptPrinter {
 				case TDClass(superClass, interfaces, isInterface):
 					(isInterface ? "interface " : "class ") + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (superClass != null ? " extends " + printTypePath(superClass) : "")
-					+ (interfaces != null && interfaces.length>0 ? (isInterface ? [for (tp in interfaces) " extends " + printTypePath(tp)].join("") : " implements " + interfaces.map(printTypePath).join(", ")) : "")
+					+ (interfaces != null ? (isInterface ? [for (tp in interfaces) " extends " + printTypePath(tp)] : [for (tp in interfaces) " implements " + printTypePath(tp)]).join("") : "")
 					+ "\n{\n"
 					+ [for (f in t.fields) {
 						var fstr = printField(f);
@@ -273,12 +240,13 @@ class TypeScriptPrinter {
 					}].join("\n")
 					+ "\n}";
 				case TDAlias(ct):
-					"type " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " ="
-					+ switch(ct) {
-						case TExtend(tpl, fields): "\n" + printExtension(tpl, fields) + ";";
+					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " ="
+					+ (switch(ct) {
+						case TExtend(tpl, fields): " " + printExtension(tpl, fields);
 						case TAnonymous(fields): "\n" + printStructure(fields);
-						case _: " " + printComplexType(ct) + ";";
-					};
+						case _: " " + printComplexType(ct);
+					})
+					+ ";";
 				case TDAbstract(tthis, from, to):
 					"abstract " + t.name
 					+ (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")

@@ -3,14 +3,14 @@ import haxe.macro.Context;
 import sys.io.File;
 using StringTools;
 
-class ExtGen
+class CodeGen
 {
 	public static macro function generate(generatorName:String, outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		var generator = switch (generatorName)
 		{
-			case "haxe-extern": new extgen.HaxeExternGenerator(outPath);
-			case "typescript-extern": new extgen.TypeScriptExternGenerator(outPath);
+			case "haxe-extern": new codegen.HaxeExternGenerator(outPath);
+			case "typescript-extern": new codegen.TypeScriptExternGenerator(outPath);
 			case _: Context.fatalError("Unknow generator '" + generatorName + "'. Supported values: 'haxe-extern', 'typescript-extern'.", Context.currentPos());
 		};
 		
@@ -53,6 +53,6 @@ class ExtGen
 			}
 		}
 
-		new extgen.Processor(generator, filter, mapper);
+		new codegen.Processor(generator, filter, mapper);
 	}
 }

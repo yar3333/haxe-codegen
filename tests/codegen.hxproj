@@ -25,7 +25,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="True" />
-    <option additional="--no-output&#xA;--macro &quot;ExtGen.generate('typescript-extern','externs/out.d.ts','testpack')&quot;" />
+    <option additional="--no-output&#xA;--macro &quot;CodeGen.generate('typescript-extern','externs/out.d.ts','testpack')&quot;" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -37,12 +37,8 @@
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
-    <hidden path="bin" />
     <hidden path="..\library\library.zip" />
     <hidden path="obj" />
-    <hidden path="Makefile" />
-    <hidden path="Makefile.platform" />
-    <hidden path="Makefile.test" />
   </hiddenPaths>
   <!-- Executed before build -->
   <preBuildCommand />

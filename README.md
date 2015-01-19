@@ -1,12 +1,12 @@
-# extgen #
+# codegen #
 
-A macro tool to generate externals (haxe and none-haxe) from existing haxe source codes.
+A macro tool to generate codes (haxe and none-haxe) from existing haxe source codes.
 
 Useful if you want to split your project to several separate-compiled parts
 and you want to haxe api (extern classes) for your code parts commmunication.
 
 ### Usage ###
-Compile your project with "-lib extgen" and "--macro ExtGen.generate(generatorName,outPath,?topLevelPackage,?filterFile,?mapperFile)"
+Compile your project with "-lib codegen" and "--macro CodeGen.generate(generatorName,outPath,?topLevelPackage,?filterFile,?mapperFile)"
 
  * generatorName - one of the next:
 	 * **haxe-extern** - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
@@ -21,7 +21,7 @@ Private and marked with @noapi meta types/fields are ignored.
 Example:
 ```
 #!bash
-haxe -lib mylib -cp src -main Main -js out.js --no-output -lib extgen --macro "ExtGen.generate('haxe-extern','hxclasses','myproj.filter','myproj.mapper')" 
+haxe -lib mylib -cp src -main Main -js out.js --no-output -lib codegen --macro "CodeGen.generate('haxe-extern','hxclasses','myproj.filter','myproj.mapper')" 
 ```
 
 **myproj.filter** file example:
