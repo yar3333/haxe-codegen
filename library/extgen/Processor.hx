@@ -9,8 +9,8 @@ import sys.io.File;
 import haxe.macro.Type;
 import haxe.io.Path;
 using haxe.macro.Tools;
-using Lambda;
 using StringTools;
+using Lambda;
 
 class Processor
 {
@@ -30,11 +30,21 @@ class Processor
 	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(filter:Array<String>, generator:IGenerator) 
+	public function new(generator:IGenerator, filter:Array<String>, mapper:Array<{ from:String, to:String }>) 
 	{
-		this.filter = filter != null ? filter : [];
+		if (filter == null) filter = [];
+		if (mapper == null) mapper = [];
 		
-		for (key in stdTypes.keys()) this.filter.push("-" + key);
+		this.filter = filter;
+		
+		mapper = mapper.copy();
+		mapper.reverse();
+		
+		for (key in stdTypes.keys())
+		{
+			filter.push("-" + key);
+			mapper.push({ from:key, to:stdTypes.get(key) });
+		}
 		
 		Context.onGenerate(function(innerTypes)
 		{
@@ -51,8 +61,17 @@ class Processor
 			(
 				function(tp)
 				{
-					var to = stdTypes.get(Tools.typePathToString(tp));
-					if (to != null) Tools.stringToTypePath(to, tp);
+					var from = Tools.typePathToString(tp);
+					
+					for (m in mapper)
+					{
+						if (m.from == from) Tools.stringToTypePath(m.to, tp);
+					}
+					
+					for (m in mapper)
+					{
+						if (from.startsWith(m.from + ".")) Tools.stringToTypePath(m.to + from.substring(m.from.length), tp);
+					}
 				}			
 			)
 			.process(typeDefs);
