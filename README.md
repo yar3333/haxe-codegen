@@ -9,9 +9,9 @@ and you want to haxe api (extern classes) for your code parts commmunication.
 Compile your project with "-lib extgen" and "--macro ExtGen.generate(generatorName,outPath,?topLevelPackage,?filterFile,?mapperFile)"
 
  * generatorName - one of the next:
-	 * 'haxe-extern' (generate haxe extern classes like haxe compiler '--gen-hx-classes' option);
-	 * 'typescript-extern' (generate typescript extern classes);
- * outPath - path to output directory (for 'haxe-extern') or output file (for 'typescript-extern');
+	 * **haxe-extern** - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
+	 * **typescript-extern** - generate typescript extern classes;
+ * outPath - path to output directory (for **haxe-extern**) or output file (for **typescript-extern**);
  * topLevelPackage - a simple way to filter generated types;
  * filterFile - path to file with strings prefixed with "+" to include or "-" to exclude specified package/type (one per line);
  * mapperFile - path to file with strings in 'FromType => ToType' format (use to map types).
@@ -24,7 +24,7 @@ Example:
 haxe -lib mylib -cp src -main Main -js out.js --no-output -lib extgen --macro "ExtGen.generate('haxe-extern','hxclasses','myproj.filter','myproj.mapper')" 
 ```
 
-myproj.filter file example:
+**myproj.filter** file example:
 ```
 #!bash
 +mypack
@@ -32,7 +32,7 @@ myproj.filter file example:
 -mypack.ClassToExclude
 ```
 
-# myproj.mapper file example:
+**myproj.mapper** file example:
 ```
 #!bash
 mypack.MyTypeA => mypack.MyType1
