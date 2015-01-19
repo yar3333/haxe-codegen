@@ -7,10 +7,12 @@ Useful if you split your project into several separate-compiled parts and you wa
 ### Usage ###
 Compile your project with '-lib codegen' and '--macro "CodeGen.**METHOD**(outPath,?topLevelPackage,?filterFile,?mapperFile)"'
 where **METHOD** can be:
+
  * **haxeExtern** - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
  * **typescriptExtern** - generate typescript extern classes.
 
 Other arguments detail:
+
  * outPath - path to output directory (for **haxeExtern**) or output file (for **typescriptExtern**);
  * topLevelPackage - a simple way to filter generated types;
  * filterFile - path to file with strings prefixed with "+" to include or "-" to exclude specified package/type (one per line);
