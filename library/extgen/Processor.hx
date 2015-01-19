@@ -14,31 +14,27 @@ using StringTools;
 
 class Processor
 {
-	var topLevelPackage : String;
-	var includeRegex : EReg;
-	var excludeRegex : EReg;
-	var includeTypes : Array<String>;
-	var excludeTypes : Array<String>;
+	var stdTypes =
+	[
+		"StdTypes.Float" => "Float",
+		"StdTypes.Int" => "Int",
+		"StdTypes.Void" => "Void",
+		"StdTypes.Bool" => "Bool",
+		"StdTypes.Null" => "Null",
+		"StdTypes.Dynamic" => "Dynamic",
+		"StdTypes.Iterator" => "Iterator",
+		"StdTypes.Iterable" => "Iterable",
+		"StdTypes.ArrayAccess" => "ArrayAccess"
+	];
 	
+	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(topLevelPackage:String, includeRegex:EReg, excludeRegex:EReg, includeTypes:Array<String>, excludeTypes:Array<String>, generator:IGenerator) 
+	public function new(filter:Array<String>, generator:IGenerator) 
 	{
-		this.topLevelPackage = topLevelPackage != null ? topLevelPackage : "";
-		this.includeRegex = includeRegex;
-		this.excludeRegex = excludeRegex;
-		this.includeTypes = includeTypes != null ? includeTypes.map(function(s) return s.trim()).filter(function(s) return s != "" && !s.startsWith("#")) : [];
-		this.excludeTypes = excludeTypes != null ? excludeTypes.map(function(s) return s.trim()).filter(function(s) return s != "" && !s.startsWith("#")) : [];
+		this.filter = filter != null ? filter : [];
 		
-		this.excludeTypes.push("StdTypes.Float");
-		this.excludeTypes.push("StdTypes.Int");
-		this.excludeTypes.push("StdTypes.Void");
-		this.excludeTypes.push("StdTypes.Bool");
-		this.excludeTypes.push("StdTypes.Null");
-		this.excludeTypes.push("StdTypes.Dynamic");
-		this.excludeTypes.push("StdTypes.Iterator");
-		this.excludeTypes.push("StdTypes.Iterable");
-		this.excludeTypes.push("StdTypes.ArrayAccess");
+		for (key in stdTypes.keys()) this.filter.push("-" + key);
 		
 		Context.onGenerate(function(innerTypes)
 		{
@@ -51,18 +47,14 @@ class Processor
 				if (r != null) typeDefs.push(r);
 			}
 			
-			new TypeMapper
-			([
-				"StdTypes.Float" => "Float",
-				"StdTypes.Int" => "Int",
-				"StdTypes.Void" => "Void",
-				"StdTypes.Bool" => "Bool",
-				"StdTypes.Null" => "Null",
-				"StdTypes.Dynamic" => "Dynamic",
-				"StdTypes.Iterator" => "Iterator",
-				"StdTypes.Iterable" => "Iterable",
-				"StdTypes.ArrayAccess" => "ArrayAccess"
-			])
+			new Patcher
+			(
+				function(tp)
+				{
+					var to = stdTypes.get(Tools.typePathToString(tp));
+					if (to != null) Tools.stringToTypePath(to, tp);
+				}			
+			)
 			.process(typeDefs);
 			
 			generator.generate(typeDefs);
@@ -165,13 +157,29 @@ class Processor
 	{
 		var path = c.pack.concat([c.name]).join(".");
 		
-		if (topLevelPackage != "" && !path.startsWith(topLevelPackage+".")) return false;
-		
-		if (includeRegex != null && !includeRegex.match(path)) return true;
-		if (excludeRegex != null &&  excludeRegex.match(path)) return true;
-		
-		if (includeTypes.length > 0 && !includeTypes.exists(function(t) return path == t || path.startsWith(t + "."))) return true;
-		if (excludeTypes.length > 0 &&  excludeTypes.exists(function(t) return path == t || path.startsWith(t + "."))) return true;
+		if (filter.length > 0)
+		{
+			var included = false;
+			for (s in filter)
+			{
+				s = s.trim();
+				if (s == "" || s.startsWith("#") || s.startsWith("//")) continue;
+				if (s.startsWith("-"))
+				{
+					if (path == s.substring(1) || path.startsWith(s.substring(1) + ".")) return true;
+				}
+				else 
+				if (s.startsWith("+"))
+				{
+					if (path == s.substring(1) || path.startsWith(s.substring(1) + ".")) included = true;
+				}
+				else
+				{
+					Context.fatalError("Unknow filter string '" + s + "'.", Context.currentPos());
+				}
+			}
+			if (!included) return true;
+		}
 		
 		return c.meta.has("noapi");
 	}

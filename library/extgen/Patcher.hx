@@ -3,13 +3,15 @@ package extgen;
 import haxe.macro.Expr;
 using Lambda;
 
-class TypeMapper
+class Patcher
 {
-	var map : Map<String, String>;
+	var customProcessTypePath : TypePath->Void;
+	var customProcessField : Field->Void;
 	
-	public function new(map:Map<String, String>)
+	public function new(?customProcessTypePath:TypePath->Void, ?customProcessField:Field->Void)
 	{
-		this.map = map;
+		this.customProcessTypePath = customProcessTypePath;
+		this.customProcessField = customProcessField;
 	}
 	
 	public function process(types:Array<TypeDefinitionEx>)
@@ -66,6 +68,8 @@ class TypeMapper
 	
 	function processField(field:Field)
 	{
+		if (customProcessField != null) customProcessField(field);
+		
 		switch (field.kind)
 		{
 			case FieldType.FFun(f):
@@ -83,26 +87,7 @@ class TypeMapper
 	
 	function processTypePath(tp:TypePath)
 	{
-		var path = tp.pack.concat([tp.name]);
-		if (tp.sub != null) path.push(tp.sub);
-		
-		var to = map.get(path.join("."));
-		if (to != null)
-		{
-			var n = to.lastIndexOf(".");
-			if (n < 0)
-			{
-				tp.pack = [];
-				tp.name = to;
-			}
-			else
-			{
-				tp.pack = to.substring(0, n).split(".");
-				tp.name = to.substring(n + 1);
-				
-			}
-			tp.sub = null;
-		}
+		if (customProcessTypePath != null) customProcessTypePath(tp);
 		
 		tp.params.iter(processTypeParam);
 	}

@@ -25,7 +25,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="True" />
-    <option additional="--no-output&#xA;--macro &quot;ExtGen.generate('typescript-extern','externs/out.d.ts',null,'regex:Main|TestTypeDef')&quot;" />
+    <option additional="--no-output&#xA;--macro &quot;ExtGen.generate('typescript-extern','externs/out.d.ts','testpack')&quot;" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>

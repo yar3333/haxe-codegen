@@ -5,7 +5,7 @@ using StringTools;
 
 class ExtGen
 {
-	public static macro function generate(generatorName:String, outPath:String, ?topLevelPackage:String, ?include:String, ?exclude:String) : Void
+	public static macro function generate(generatorName:String, outPath:String, ?topLevelPackage:String, ?filterFile:String) : Void
 	{
 		var generator = switch (generatorName)
 		{
@@ -17,17 +17,11 @@ class ExtGen
 		Lib.println("generator: " + generatorName);
 		Lib.println("outPath: " + outPath);
 		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
-		Lib.println("include: " + (include != null ? include : "not specified"));
-		Lib.println("exclude: " + (exclude != null ? exclude : "not specified"));
+		Lib.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
 		
-		new extgen.Processor
-		(
-			topLevelPackage,
-			include != null && include.startsWith("regex:") ? new EReg(include.substring("regex:".length), "") : null,
-			exclude != null && exclude.startsWith("regex:") ? new EReg(exclude.substring("regex:".length), "") : null,
-			include != null && !include.startsWith("regex:") ? File.getContent(include).replace("\r\n", "\n").replace("\r", "\n").split("\n") : null,
-			exclude != null && !exclude.startsWith("regex:") ? File.getContent(exclude).replace("\r\n", "\n").replace("\r", "\n").split("\n") : null,
-			generator
-		);
+		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
+		if (topLevelPackage != null && topLevelPackage != "") filter.unshift("+" + topLevelPackage);
+
+		new extgen.Processor(filter, generator);
 	}
 }

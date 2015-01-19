@@ -239,7 +239,7 @@ class TypeScriptPrinter {
 
 		var str = t == null ? "#NULL" :
 			(printPackage && t.pack.length > 0 && t.pack[0] != "" ? "package " + t.pack.join(".") + ";\n" : "") +
-			printMetadatas(t.meta, " ") + (t.isExtern ? "export " : "") + switch (t.kind) {
+			printMetadatas(t.meta, " ") + (t.isExtern ? (t.pack.length>0 ? "export " : "declare ")  : "") + switch (t.kind) {
 				case TDEnum:
 					"enum " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
 					+ t.fields.map(function (field) return

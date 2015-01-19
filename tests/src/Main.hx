@@ -1,6 +1,4 @@
-package ;
-
-import TestTypeDef;
+import testpack.TestModule;
 
 class Main
 {

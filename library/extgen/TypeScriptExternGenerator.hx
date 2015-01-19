@@ -1,10 +1,21 @@
 package extgen;
 
 import haxe.io.Path;
+//import haxe.macro.Expr.TypePath;
 using StringTools;
 
 class TypeScriptExternGenerator implements IGenerator
 {
+	static var typeMap =
+	[
+		"Float" => "number",
+		"Int" => "number",
+		"Bool" => "boolean",
+		"Dynamic" => "any",
+		"Void" => "void",
+		"String" => "string"
+	];
+	
 	var outPath:String;
 	
 	public function new(outPath:String) 
@@ -16,30 +27,32 @@ class TypeScriptExternGenerator implements IGenerator
 	{
 		Tools.makeClassesExternAndRemovePrivateFields(types);
 		
-		new TypeMapper
-		([
-			"Float" => "number",
-			"Int" => "number",
-			"Bool" => "boolean",
-			"Dynamic" => "any",
-			"Void" => "void",
-			"String" => "string"
-		])
-		.process(types);
-		
-		new FieldMapper
-		([
-			"new" => "constructor"
-		])
+		new Patcher
+		(
+			function(tp)
+			{
+				var to = typeMap.get(Tools.typePathToString(tp));
+				if (to != null) Tools.stringToTypePath(to, tp);
+				
+				if (to == "any")
+				{
+					tp.params = [];
+				}
+			},
+			function(field)
+			{
+				if (field.name == "new") field.name = "constructor";
+			}
+		)
 		.process(types);
 		
 		var blocks = [];
 		
-		var modules = Tools.separateByModules(types);
-		for (module in modules.keys())
+		var packs = Tools.separateByPackages(types);
+		for (pack in packs.keys())
 		{
 			var texts = [];
-			for (tt in modules.get(module))
+			for (tt in packs.get(pack))
 			{
 				texts.push
 				(
@@ -48,8 +61,8 @@ class TypeScriptExternGenerator implements IGenerator
 				);
 			}
 			
-			var pack = Path.directory(module.replace(".", "/")).replace("/", ".");
-			blocks.push((pack != "" ? "declare module " + pack + "\n{\n" : "") + "\t" + texts.join("\n\n").replace("\n", "\n\t") + (pack != "" ? "\n}" : ""));
+			var tab = pack != "" ? "\t" : "";
+			blocks.push((pack != "" ? "declare module " + pack + "\n{\n" : "") + tab + texts.join("\n\n").replace("\n", "\n" + tab) + (pack != "" ? "\n}" : ""));
 		}
 		
 		Tools.saveFileContent(outPath, blocks.join("\n\n"));
