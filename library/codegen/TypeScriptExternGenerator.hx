@@ -1,7 +1,7 @@
 package codegen;
 
 import haxe.io.Path;
-//import haxe.macro.Expr.TypePath;
+import haxe.macro.Expr;
 using StringTools;
 
 class TypeScriptExternGenerator implements IGenerator
@@ -39,9 +39,18 @@ class TypeScriptExternGenerator implements IGenerator
 					tp.params = [];
 				}
 			},
-			function(field)
+			function(field:Field)
 			{
-				if (field.name == "new") field.name = "constructor";
+				if (field.name == "new")
+				{
+					field.name = "constructor";
+					switch (field.kind)
+					{
+						case FieldType.FFun(f):
+							f.ret = null;
+						case _:
+					}
+				}
 			}
 		)
 		.process(types);
