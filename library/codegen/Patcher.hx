@@ -8,13 +8,19 @@ class Patcher
 	var customProcessTypePath : TypePath->Void;
 	var customProcessField : Field->Void;
 	
-	public function new(?customProcessTypePath:TypePath->Void, ?customProcessField:Field->Void)
+	public static function run(types:Array<TypeDefinitionEx>, ?customProcessTypePath:TypePath->Void, ?customProcessField:Field->Void)
+	{
+		var instance = new Patcher(customProcessTypePath, customProcessField);
+		instance.process(types);
+	}
+	
+	function new(customProcessTypePath:TypePath->Void, customProcessField:Field->Void)
 	{
 		this.customProcessTypePath = customProcessTypePath;
 		this.customProcessField = customProcessField;
 	}
 	
-	public function process(types:Array<TypeDefinitionEx>)
+	function process(types:Array<TypeDefinitionEx>)
 	{
 		for (type in types)
 		{

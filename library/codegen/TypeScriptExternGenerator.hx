@@ -16,9 +16,9 @@ class TypeScriptExternGenerator implements IGenerator
 		"String" => "string"
 	];
 	
-	var outPath:String;
+	var outPath : String;
 	
-	public function new(outPath:String) 
+	public function new(outPath:String)
 	{
 		this.outPath = outPath;
 	}
@@ -26,9 +26,12 @@ class TypeScriptExternGenerator implements IGenerator
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
 		Tools.makeClassesExternAndRemovePrivateFields(types);
+		Tools.applyNatives(types);
 		
-		new Patcher
+		Patcher.run
 		(
+			types,
+			
 			function(tp)
 			{
 				var to = typeMap.get(Tools.typePathToString(tp));
@@ -39,6 +42,7 @@ class TypeScriptExternGenerator implements IGenerator
 					tp.params = [];
 				}
 			},
+			
 			function(field:Field)
 			{
 				if (field.name == "new")
@@ -52,8 +56,7 @@ class TypeScriptExternGenerator implements IGenerator
 					}
 				}
 			}
-		)
-		.process(types);
+		);
 		
 		var blocks = [];
 		

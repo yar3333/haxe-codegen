@@ -57,24 +57,7 @@ class Processor
 				if (r != null) typeDefs.push(r);
 			}
 			
-			new Patcher
-			(
-				function(tp)
-				{
-					var from = Tools.typePathToString(tp);
-					
-					for (m in mapper)
-					{
-						if (m.from == from) Tools.stringToTypePath(m.to, tp);
-					}
-					
-					for (m in mapper)
-					{
-						if (from.startsWith(m.from + ".")) Tools.stringToTypePath(m.to + from.substring(m.from.length), tp);
-					}
-				}			
-			)
-			.process(typeDefs);
+			Patcher.run(typeDefs, Tools.mapType.bind(mapper));
 			
 			generator.generate(typeDefs);
 		});

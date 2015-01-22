@@ -6,34 +6,34 @@ using StringTools;
 
 class CodeGen
 {
-	public static macro function haxeExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
+	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
+		if (applyNatives == null) applyNatives = true;
 		
-		Lib.println("generator: haxeExtern");
+		Lib.println("generator: haxe extern");
 		Lib.println("outPath: " + outPath);
-		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
-		Lib.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
-		Lib.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
+		Lib.println("applyNatives: " + applyNatives);
 		
-		generate(new codegen.HaxeExternGenerator(outPath), topLevelPackage, filterFile, mapperFile);
+		generate(new codegen.HaxeExternGenerator(outPath, applyNatives), topLevelPackage, filterFile, mapperFile);
 	}
 	
 	public static macro function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "tsclasses.d.ts";
 		
-		Lib.println("generator: typescriptExtern");
+		Lib.println("generator: typescript extern");
 		Lib.println("outPath: " + outPath);
-		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
-		Lib.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
-		Lib.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
 		
 		generate(new codegen.TypeScriptExternGenerator(outPath), topLevelPackage, filterFile, mapperFile);
 	}
 	
-	static function generate(generator:IGenerator, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
+	static function generate(generator:IGenerator, topLevelPackage:String, filterFile:String, mapperFile:String) : Void
 	{
+		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
+		Lib.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
+		Lib.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
+		
 		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
 		if (topLevelPackage != null && topLevelPackage != "") filter.unshift("+" + topLevelPackage);
 		

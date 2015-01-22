@@ -2,6 +2,7 @@ package codegen;
 
 import haxe.io.Path;
 import haxe.macro.Expr;
+import haxe.macro.ExprTools;
 import sys.FileSystem;
 import sys.io.File;
 using StringTools;
@@ -80,5 +81,74 @@ class Tools
 			
 		}
 		tp.sub = null;
+	}
+	
+	public static function mapType(mapper:Array<{ from:String, to:String }>, tp:TypePath)
+	{
+		var from = Tools.typePathToString(tp);
+		
+		for (m in mapper)
+		{
+			if (m.from == from) Tools.stringToTypePath(m.to, tp);
+		}
+		
+		for (m in mapper)
+		{
+			if (from.startsWith(m.from + ".")) Tools.stringToTypePath(m.to + from.substring(m.from.length), tp);
+		}
+	}
+	
+	/**
+	 * Rename types using @:native. Remove that meta after all.
+	 */
+	public static function applyNatives(types:Array<TypeDefinitionEx>)
+	{
+		var mapper = new Array<{ from:String, to:String }>();
+		var modules = new Map<String, String>();
+		
+		for (tt in types)
+		{
+			var native = tt.meta.filter(function(m) return m.name == ":native");
+			if (native.length > 0)
+			{
+				var to = ExprTools.getValue(native[native.length - 1].params[0]);
+				mapper.push({ from:(tt.module != "" ? tt.module + "." : "") + tt.name, to:to });
+				
+				tt.meta = tt.meta.filter(function(m) return m.name != ":native");
+				
+				var oldModule = tt.module;
+				applyFullTypeNameToTypeDefinition(to, tt);
+				if (tt.module != oldModule) modules.set(oldModule, tt.module);
+			}
+		}
+		
+		for (tt in types)
+		{
+			if (modules.exists(tt.module)) tt.module = modules.get(tt.module);
+		}
+		
+		Patcher.run(types, mapType.bind(mapper));
+	}
+	
+	static function applyFullTypeNameToTypeDefinition(s:String, tt:TypeDefinitionEx) : Void
+	{
+		var p = s.split(".");
+		if (p.length == 1)
+		{
+			tt.module = s;
+			tt.pack = [];
+		}
+		else
+		if (~/^A-Z/.match(p[p.length - 2]))
+		{
+			tt.module = p.slice(0, p.length - 1).join(".");
+			tt.pack = p.slice(0, p.length - 2);
+		}
+		else
+		{
+			tt.module = s;
+			tt.pack = p.slice(0, p.length - 1);
+		}
+		tt.name = p[p.length - 1];
 	}
 }

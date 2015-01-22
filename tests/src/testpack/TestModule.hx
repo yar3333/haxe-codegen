@@ -1,12 +1,14 @@
 package testpack;
 
-/*typedef TestTypeDef =
+typedef TestTypeDef =
 {
 	var mysecVar : String;
 	var myvar : Int;
-}*/
+}
 
-enum TestEnum
+
+@:native("myNativePack.NativeName")
+extern enum TestEnum
 {
 	B(test:Int);
 	A;
