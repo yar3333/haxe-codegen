@@ -306,7 +306,7 @@ class TypeScriptPrinter {
 	function printDoc(doc:String) : String
 	{
 		return doc != null && doc != "" 
-			? "\n" + tabs + "/**\n" + tabs + " * " + StringTools.trim(doc).split("\n").map(StringTools.trim).join("\n" + tabs + " * ") + "\n" + tabs + " */\n" + tabs
+			? "/**\n" + tabs + " " + StringTools.trim(doc).split("\n").map(StringTools.trim).join("\n" + tabs + " ") + "\n" + tabs + " */\n" + tabs
 			: "";
 	}
 }

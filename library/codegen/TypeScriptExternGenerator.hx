@@ -67,7 +67,7 @@ class TypeScriptExternGenerator implements IGenerator
 			{
 				texts.push
 				(
-					(tt.doc != null && tt.doc != "" ? "/**\n * " + tt.doc.trim().split("\n").map(StringTools.trim).join("\n * ")  + "\n */\n" : "")
+					(tt.doc != null && tt.doc != "" ? "/**\n " + tt.doc.trim().split("\n").map(StringTools.trim).join("\n ")  + "\n */\n" : "")
 					+ new TypeScriptPrinter().printTypeDefinition(tt, false)
 				);
 			}
