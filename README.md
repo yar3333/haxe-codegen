@@ -18,7 +18,7 @@ Other arguments detail:
  * filterFile - path to file with strings prefixed with "+" to include or "-" to exclude specified package/type (one per line);
  * mapperFile - path to file with strings in 'FromType => ToType' format (use to map types).
 
-Private and marked with @noapi meta types/fields are ignored.
+Private and marked with @:noapi meta types/fields are ignored.
  
 Example:
 ```

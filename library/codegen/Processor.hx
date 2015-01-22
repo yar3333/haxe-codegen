@@ -91,12 +91,12 @@ class Processor
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDClass(getTypePath(c.superClass), c.interfaces.map(getTypePath), c.isInterface),
 					fields : fields
-						.filter(function(f) return !f.meta.has("noapi") && f.isPublic)
+						.filter(function(f) return !f.meta.has(":noapi") && f.isPublic)
 						.map(classFieldToField.bind(c, false))
 						.concat
 						(
 							c.statics.get()
-								.filter(function(f) return !f.meta.has("noapi") && f.isPublic)
+								.filter(function(f) return !f.meta.has(":noapi") && f.isPublic)
 								.map(classFieldToField.bind(c, true))
 						)
 				};
@@ -118,7 +118,7 @@ class Processor
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDEnum,
 					fields : c.constructs
-						.filter(function(f) return !f.meta.has("noapi"))
+						.filter(function(f) return !f.meta.has(":noapi"))
 						.map(enumFieldToField)
 						.array()
 				};
@@ -211,7 +211,7 @@ class Processor
 			if (!included) return true;
 		}
 		
-		return c.meta.exists(function(m) return m.name=="noapi");
+		return c.meta.exists(function(m) return m.name==":noapi");
 	}
 	
 	function getTypePath(e:Null<{ t:Ref<ClassType> }>) : TypePath
@@ -381,7 +381,7 @@ class Processor
 		{
 			case Type.TAnonymous(a):
 				var fields = a.get().fields
-					.filter(function(f) return !f.meta.has("noapi") && f.isPublic)
+					.filter(function(f) return !f.meta.has(":noapi") && f.isPublic)
 					.map(classFieldToField.bind(null, false))
 					.map(function(f) { f.doc = f.doc; return f; });
 				for (f in fields) f.access = f.access.filter(function(a) return a != Access.APublic && a != Access.APrivate);
