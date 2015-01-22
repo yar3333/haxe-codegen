@@ -32,7 +32,7 @@ class Processor
 	
 	public function new(generator:IGenerator, filter:Array<String>, mapper:Array<{ from:String, to:String }>) 
 	{
-		if (filter == null) filter = [];
+		if (filter == null || filter.length == 0) filter = [ "+*" ];
 		if (mapper == null) mapper = [];
 		
 		this.filter = filter;
@@ -173,7 +173,7 @@ class Processor
 				else 
 				if (s.startsWith("+"))
 				{
-					if (path == s.substring(1) || path.startsWith(s.substring(1) + ".")) included = true;
+					if (s == "+*" || path == s.substring(1) || path.startsWith(s.substring(1) + ".")) included = true;
 				}
 				else
 				{
