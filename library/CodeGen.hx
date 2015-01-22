@@ -9,13 +9,13 @@ class CodeGen
 	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
-		if (applyNatives == null) applyNatives = true;
+		if (applyNatives == null) applyNatives = false;
 		
 		Lib.println("generator: haxe extern");
 		Lib.println("outPath: " + outPath);
 		Lib.println("applyNatives: " + applyNatives);
 		
-		generate(new codegen.HaxeExternGenerator(outPath, applyNatives), topLevelPackage, filterFile, mapperFile);
+		generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile);
 	}
 	
 	public static macro function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
@@ -25,14 +25,15 @@ class CodeGen
 		Lib.println("generator: typescript extern");
 		Lib.println("outPath: " + outPath);
 		
-		generate(new codegen.TypeScriptExternGenerator(outPath), topLevelPackage, filterFile, mapperFile);
+		generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile);
 	}
 	
-	static function generate(generator:IGenerator, topLevelPackage:String, filterFile:String, mapperFile:String) : Void
+	static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String) : Void
 	{
 		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
 		Lib.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
 		Lib.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
+		Lib.println("applyNatives: " + applyNatives);
 		
 		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
 		if (topLevelPackage != null && topLevelPackage != "") filter.unshift("+" + topLevelPackage);
@@ -67,6 +68,6 @@ class CodeGen
 			}
 		}
 
-		new codegen.Processor(generator, filter, mapper);
+		new codegen.Processor(generator, applyNatives, filter, mapper);
 	}
 }

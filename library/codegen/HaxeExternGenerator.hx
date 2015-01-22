@@ -6,12 +6,10 @@ using StringTools;
 class HaxeExternGenerator implements IGenerator
 {
 	var outPath : String;
-	var applyNatives : Bool;
 	
-	public function new(outPath:String, applyNatives:Bool) 
+	public function new(outPath:String)
 	{
 		this.outPath = outPath;
-		this.applyNatives = applyNatives;
 	}
 	
 	public function generate(types:Array<TypeDefinitionEx>)
@@ -19,7 +17,6 @@ class HaxeExternGenerator implements IGenerator
 		for (type in types) type.meta = type.meta.filter(function(m) return m.name != ":build");
 		
 		Tools.makeClassesExternAndRemovePrivateFields(types);
-		if (applyNatives) Tools.applyNatives(types);
 		
 		var modules = Tools.separateByModules(types);
 		for (module in modules.keys())

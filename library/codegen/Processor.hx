@@ -30,7 +30,7 @@ class Processor
 	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(generator:IGenerator, filter:Array<String>, mapper:Array<{ from:String, to:String }>) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>) 
 	{
 		if (filter == null || filter.length == 0) filter = [ "+*" ];
 		if (mapper == null) mapper = [];
@@ -57,6 +57,10 @@ class Processor
 				if (r != null) typeDefs.push(r);
 			}
 			
+			if (applyNatives) Tools.applyNatives(typeDefs);
+			
+			typeDefs = typeDefs.filter(function(tt) return !isExcludeType(tt));
+			
 			Patcher.run(typeDefs, Tools.mapType.bind(mapper));
 			
 			generator.generate(typeDefs);
@@ -69,7 +73,8 @@ class Processor
 		{
 			case Type.TInst(t, params):
 				var c = t.get();
-				if (isExcludeType(c)) return null;
+				
+				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				var fields = c.constructor != null ? [ c.constructor.get() ] : [];
 				fields = fields.concat(c.fields.get());
@@ -98,7 +103,9 @@ class Processor
 				
 			case Type.TEnum(t, params):
 				var c = t.get();
-				if (isExcludeType(c)) return null;
+				
+				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				
 				return
 				{
 					doc : c.doc,
@@ -118,7 +125,9 @@ class Processor
 				
 			case Type.TType(t, params):
 				var c = t.get();
-				if (isExcludeType(c)) return null;
+				
+				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				
 				return
 				{
 					doc : c.doc,
@@ -135,7 +144,9 @@ class Processor
 				
 			case Type.TAbstract(t, params):
 				var c = t.get();
-				if (isExcludeType(c)) return null;
+				
+				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				
 				return
 				{
 					doc : c.doc,
@@ -155,7 +166,24 @@ class Processor
 		}
 	}
 	
-	function isExcludeType(c:{ pack:Array<String>, name:String, meta:MetaAccess }) : Bool
+	function createStube(c: { pack:Array<String>, name:String, module:String, meta:MetaAccess } ) : TypeDefinitionEx
+	{
+		return
+		{
+			doc : null,
+			module : c.module,
+			pack : c.pack,
+			name : c.name,
+			pos : null,
+			meta : c.meta.get(),
+			params : [],
+			isExtern : true,
+			kind : TypeDefKind.TDClass(null, null, false),
+			fields : []
+		};
+	}
+	
+	function isExcludeType(c:{ pack:Array<String>, name:String, meta:Metadata }) : Bool
 	{
 		var path = c.pack.concat([c.name]).join(".");
 		
@@ -183,7 +211,7 @@ class Processor
 			if (!included) return true;
 		}
 		
-		return c.meta.has("noapi");
+		return c.meta.exists(function(m) return m.name=="noapi");
 	}
 	
 	function getTypePath(e:Null<{ t:Ref<ClassType> }>) : TypePath

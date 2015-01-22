@@ -112,7 +112,7 @@ class Tools
 			if (native.length > 0)
 			{
 				var to = ExprTools.getValue(native[native.length - 1].params[0]);
-				mapper.push({ from:(tt.module != "" ? tt.module + "." : "") + tt.name, to:to });
+				mapper.push({ from:getFullTypeName(tt), to:to });
 				
 				tt.meta = tt.meta.filter(function(m) return m.name != ":native");
 				
@@ -129,6 +129,13 @@ class Tools
 		
 		Patcher.run(types, mapType.bind(mapper));
 	}
+	
+	static function getFullTypeName(tt:{ module:String, name:String }) : String
+	{
+		if (tt.module == tt.name) return tt.name;
+		if (tt.module.endsWith("." + tt.name)) return tt.module;
+		return tt.module + "." + tt.name;
+	} 
 	
 	static function applyFullTypeNameToTypeDefinition(s:String, tt:TypeDefinitionEx) : Void
 	{
