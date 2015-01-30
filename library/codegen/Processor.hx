@@ -76,8 +76,14 @@ class Processor
 				
 				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
-				var fields = c.constructor != null ? [ c.constructor.get() ] : [];
-				fields = fields.concat(c.fields.get());
+				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
+				instanceFields = instanceFields.concat(c.fields.get());
+				instanceFields = instanceFields.filter(function(f) return !f.meta.has(":noapi") && f.isPublic);
+				instanceFields = instanceFields.filter(function(f) return !f.name.startsWith("get_") && !f.name.startsWith("set_") || !instanceFields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
+				
+				var staticFields = c.statics.get();
+				staticFields = staticFields.filter(function(f) return !f.meta.has(":noapi") && f.isPublic);
+				staticFields = staticFields.filter(function(f) return !f.name.startsWith("get_") && !f.name.startsWith("set_") || !staticFields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
 				
 				return
 				{
@@ -90,15 +96,7 @@ class Processor
 					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDClass(getTypePath(c.superClass), c.interfaces.map(getTypePath), c.isInterface),
-					fields : fields
-						.filter(function(f) return !f.meta.has(":noapi") && f.isPublic)
-						.map(classFieldToField.bind(c, false))
-						.concat
-						(
-							c.statics.get()
-								.filter(function(f) return !f.meta.has(":noapi") && f.isPublic)
-								.map(classFieldToField.bind(c, true))
-						)
+					fields : instanceFields.map(classFieldToField.bind(c, false)).concat(staticFields.map(classFieldToField.bind(c, true)))
 				};
 				
 			case Type.TEnum(t, params):

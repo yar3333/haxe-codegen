@@ -1,24 +1,13 @@
 package testpack;
 
-/**
- * This is commant B
- * asasaaasas
- */
-typedef TestTypeDef =
+/*typedef TestTypeDef =
 {
-	/**
-	 * varcom
-	 */
-	var mysecVar : String;
-	var myvar : Int;
-}
+	var ttdA(default, null) : Int;
+	var ttdB(default, null) : String;
+}*/
 
-/**
- This is commant A;
- asassasa
- */
-extern enum TestEnum
+extern class TestClass
 {
-	B(test:Int);
-	A;
+	//var propA(default, null) : Int;
+	var propB(get, never) : String;
 }
