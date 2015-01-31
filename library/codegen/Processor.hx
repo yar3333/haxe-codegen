@@ -78,12 +78,10 @@ class Processor
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
-				instanceFields = instanceFields.filter(function(f) return !f.meta.has(":noapi") && f.isPublic);
-				instanceFields = instanceFields.filter(function(f) return !f.name.startsWith("get_") && !f.name.startsWith("set_") || !instanceFields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
+				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields));
 				
 				var staticFields = c.statics.get();
-				staticFields = staticFields.filter(function(f) return !f.meta.has(":noapi") && f.isPublic);
-				staticFields = staticFields.filter(function(f) return !f.name.startsWith("get_") && !f.name.startsWith("set_") || !staticFields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
+				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields));
 				
 				return
 				{
@@ -162,6 +160,12 @@ class Processor
 			case _:
 				return null;
 		}
+	}
+	
+	function isIncludeClassField(fields:Array<ClassField>, f:ClassField) : Bool
+	{
+		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated") && f.isPublic
+		   && (!f.name.startsWith("get_") && !f.name.startsWith("set_") || !fields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
 	}
 	
 	function createStube(c: { pack:Array<String>, name:String, module:String, meta:MetaAccess } ) : TypeDefinitionEx
