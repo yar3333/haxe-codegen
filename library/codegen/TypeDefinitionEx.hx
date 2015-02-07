@@ -6,5 +6,6 @@ typedef TypeDefinitionEx =
 {>TypeDefinition,
 
 	doc:String,
-	module:String
+	module:String,
+	isPrivate:Bool
 }

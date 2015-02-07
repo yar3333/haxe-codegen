@@ -74,7 +74,7 @@ class Processor
 			case Type.TInst(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
@@ -94,13 +94,14 @@ class Processor
 					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDClass(getTypePath(c.superClass), c.interfaces.map(getTypePath), c.isInterface),
-					fields : instanceFields.map(classFieldToField.bind(c, false)).concat(staticFields.map(classFieldToField.bind(c, true)))
+					fields : instanceFields.map(classFieldToField.bind(c, false)).concat(staticFields.map(classFieldToField.bind(c, true))),
+					isPrivate : c.isPrivate
 				};
 				
 			case Type.TEnum(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				return
 				{
@@ -116,13 +117,14 @@ class Processor
 					fields : c.constructs
 						.filter(function(f) return !f.meta.has(":noapi"))
 						.map(enumFieldToField)
-						.array()
+						.array(),
+					isPrivate : c.isPrivate
 				};
 				
 			case Type.TType(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				return
 				{
@@ -135,13 +137,14 @@ class Processor
 					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
-					fields : null
+					fields : null,
+					isPrivate : c.isPrivate
 				};
 				
 			case Type.TAbstract(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				return
 				{
@@ -154,7 +157,8 @@ class Processor
 					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
-					fields : [] //c.constructs.map(enumFieldToField).array()
+					fields : [], //c.constructs.map(enumFieldToField).array()
+					isPrivate : c.isPrivate
 				};
 				
 			case _:
@@ -168,7 +172,7 @@ class Processor
 		   && (!f.name.startsWith("get_") && !f.name.startsWith("set_") || !fields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
 	}
 	
-	function createStube(c: { pack:Array<String>, name:String, module:String, meta:MetaAccess } ) : TypeDefinitionEx
+	function createStube(c: { isPrivate:Bool, pack:Array<String>, name:String, module:String, meta:MetaAccess } ) : TypeDefinitionEx
 	{
 		return
 		{
@@ -181,12 +185,15 @@ class Processor
 			params : [],
 			isExtern : true,
 			kind : TypeDefKind.TDClass(null, null, false),
-			fields : []
+			fields : [],
+			isPrivate : c.isPrivate
 		};
 	}
 	
-	function isExcludeType(c:{ pack:Array<String>, name:String, meta:Metadata }) : Bool
+	function isExcludeType(c:{ isPrivate:Bool, pack:Array<String>, name:String, meta:Metadata }) : Bool
 	{
+		if (c.isPrivate) return true;
+		
 		var path = c.pack.concat([c.name]).join(".");
 		
 		if (filter.length > 0)
