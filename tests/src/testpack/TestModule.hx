@@ -1,13 +1,7 @@
 package testpack;
 
-private typedef TestTypeDef =
+extern class TestClass
 {
-	var ttdA(default, null) : Int;
-	var ttdB(default, null) : String;
+	@:overload(function(a:Int):Void{})
+	static function f() : Void;
 }
-
-/*extern class TestClass
-{
-	//var propA(default, null) : Int;
-	var propB(get, never) : String;
-}*/

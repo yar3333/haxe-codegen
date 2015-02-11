@@ -1,1 +1,3 @@
+--no-output
 -D use-rtti-doc
+--macro CodeGen.preserveOverloads()

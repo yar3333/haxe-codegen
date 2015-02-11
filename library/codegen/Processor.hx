@@ -1,6 +1,5 @@
 package codegen;
 
-import neko.Lib;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Printer;
@@ -256,6 +255,9 @@ class Processor
 	
 	function classFieldToField(klass:ClassType, isStatic:Bool, f:ClassField) : Field
 	{
+		var meta = f.meta.get();
+		for (m in meta) if (m.name == ":real_overload") m.name = ":overload";
+		
 		return
 		{
 			name : f.name,
@@ -263,7 +265,7 @@ class Processor
 			access : getAccesses(klass, isStatic , f),
 			kind : getFieldKind(f),
 			pos : Context.currentPos(),
-			meta : f.meta.get()
+			meta : meta
 		};
 	}
 	
@@ -298,8 +300,10 @@ class Processor
 	function getAccesses(klass:ClassType, isStatic:Bool, f:ClassField) : Array<Access>
 	{
 		var r = [];
+		
 		if (f.isPublic) r.push(Access.APublic);
 		else            r.push(Access.APrivate);
+		
 		if (isStatic) r.push(Access.AStatic);
 		
 		var superClass = klass != null && klass.superClass != null ? klass.superClass.t.get() : null;

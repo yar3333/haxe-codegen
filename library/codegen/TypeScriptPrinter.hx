@@ -72,11 +72,13 @@ class TypeScriptPrinter {
 			return printTypeParam(tp.params[0]) + "[]";
 		}
 		
-		return
+		return convertType
+		(
 			(tp.pack.length > 0 ? tp.pack.join(".") + "." : "")
 			+ tp.name
 			+ (tp.sub != null ? '.${tp.sub}' : "")
-			+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
+			+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "")
+		);
 	}
 
 	// TODO: check if this can cause loops
@@ -90,18 +92,31 @@ class TypeScriptPrinter {
 		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.map(printField).join(", ")} }';
 	}
 
-	public function printMetadatas(meta:Array<MetadataEntry>, joinStr:String)
+	public function printMetadatas(meta:Array<MetadataEntry>, joinStr:String, field:Field)
 	{
-		return "";
-		//return meta != null && meta.length > 0 ? meta.map(printMetadata).join(joinStr) + joinStr : "";
+		var m = meta != null ? meta.map(printMetadata.bind(_, field)).filter(function(m) return m != "") : [];
+		return m.length > 0 ? m.join(joinStr) + joinStr : "";
 	}
 
-	public function printMetadata(meta:MetadataEntry)
+	public function printMetadata(meta:MetadataEntry, field:Field)
 	{
+		if (meta.name == ":overload")
+		{
+			return
+				printAccesses(field.access)
+			  + switch (field.kind)
+				{
+					case FFun(func):
+						var z = printExpr(meta.params[0]).substring("function".length);
+						while (StringTools.endsWith(z, "}")) z = z.substring(0, z.length - 1);
+						while (StringTools.endsWith(z, " ")) z = z.substring(0, z.length - 1);
+						while (StringTools.endsWith(z, "{")) z = z.substring(0, z.length - 1);
+						while (StringTools.endsWith(z, " ")) z = z.substring(0, z.length - 1);
+						field.name + z + ";";
+					case _: "";
+				};
+		}
 		return "";
-		/*return
-			'@${meta.name}'
-			+ (meta.params.length > 0 ? '(${printExprs(meta.params,", ")})' : "");*/
 	}
 
 	public function printAccesses(accesses:Array<Access>)
@@ -124,7 +139,7 @@ class TypeScriptPrinter {
 
 	public function printField(field:Field) return
 		printDoc(field.doc)
-		+ printMetadatas(field.meta, "\n" + tabs)
+		+ printMetadatas(field.meta, "\n" + tabs, field)
 		+ printAccesses(field.access)
 		+ switch(field.kind) {
 		  case FVar(t, eo): field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
@@ -216,7 +231,7 @@ class TypeScriptPrinter {
 		case EDisplayNew(tp): '#DISPLAY(${printTypePath(tp)})';
 		case ETernary(econd, eif, eelse): '${printExpr(econd)} ? ${printExpr(eif)} : ${printExpr(eelse)}';
 		case ECheckType(e1, ct): '(${printExpr(e1)} : ${printComplexType(ct)})';
-		case EMeta(meta, e1): printMetadata(meta) + " " +printExpr(e1);
+		case EMeta(meta, e1): printMetadata(meta, null) + " " +printExpr(e1);
 	}
 
 	public function printExprs(el:Array<Expr>, sep:String) {
@@ -239,12 +254,12 @@ class TypeScriptPrinter {
 
 		var str = t == null ? "#NULL" :
 			(printPackage && t.pack.length > 0 && t.pack[0] != "" ? "package " + t.pack.join(".") + ";\n" : "") +
-			printMetadatas(t.meta, " ") + (t.isExtern ? (t.pack.length>0 ? "export " : "declare ")  : "") + switch (t.kind) {
+			printMetadatas(t.meta, " ", null) + (t.isExtern ? (t.pack.length>0 ? "export " : "declare ")  : "") + switch (t.kind) {
 				case TDEnum:
 					"enum " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
 					+ t.fields.map(function (field) return
 						tabs + printDoc(field.doc)
-						+ printMetadatas(field.meta, " ")
+						+ printMetadatas(field.meta, " ", field)
 						+ (switch(field.kind) {
 							case FVar(t, _): field.name + opt(t, printComplexType, ":");
 							case FProp(_, _, _, _): throw "FProp is invalid for TDEnum.";
@@ -308,5 +323,17 @@ class TypeScriptPrinter {
 		return doc != null && doc != "" 
 			? "/**\n" + tabs + " " + StringTools.trim(doc).split("\n").map(StringTools.trim).join("\n" + tabs + " ") + "\n" + tabs + " */\n" + tabs
 			: "";
+	}
+	
+	function convertType(s:String) : String
+	{
+		switch (s)
+		{
+			case "Void": return "void";
+			case "Int", "Float": return "number";
+			case "String": return "string";
+			case "Bool": return "boolean";
+			case _: return s;
+		}
 	}
 }

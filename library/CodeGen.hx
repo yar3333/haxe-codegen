@@ -1,19 +1,129 @@
 import codegen.IGenerator;
-import neko.Lib;
+import haxe.io.Path;
 import haxe.macro.Context;
+import sys.FileSystem;
 import sys.io.File;
 using StringTools;
 
 class CodeGen
 {
+	public static macro function preserveOverloads() : Void
+	{
+		var tempDir = Path.removeTrailingSlashes(Sys.getEnv("temp")).replace("\\", "/");
+		tempDir += "/CodeGen_" + Math.round(Sys.time() * 1000) + "_"  + Std.random(10000);
+		
+		var processedFiles = new Map<String, Bool>();
+		for (classPath in Context.getClassPath())
+		{
+			classPath = Path.removeTrailingSlashes(classPath).replace("\\", "/");
+			if (classPath != "")
+			{
+				preserveOverloadsProcessDir(classPath, "", processedFiles, tempDir);
+			}
+		}
+		
+		if (FileSystem.exists(tempDir))
+		{
+			haxe.macro.Compiler.addClassPath(tempDir);
+			//Context.onGenerate(function(_) deleteDirectory(tempDir));
+		}
+	}
+	
+	static function preserveOverloadsProcessDir(classPath:String, relDirPath:String, processedFiles:Map<String, Bool>, tempDir:String) : Void
+	{
+		for (file in FileSystem.readDirectory(classPath + (relDirPath != "" ? "/" + relDirPath : "")))
+		{
+			var path = (relDirPath != "" ? relDirPath + "/" : "") + file;
+			if (FileSystem.isDirectory(classPath + "/" + path))
+			{
+				preserveOverloadsProcessDir(classPath, path, processedFiles, tempDir);
+			}
+			else
+			{
+				if (!processedFiles.exists(path))
+				{
+					processedFiles.set(path, true);
+					var text = File.getContent(classPath + "/" + path);
+					var newText = "";
+					var n : Int;
+					while ((n=text.indexOf("@:overload")) >= 0)
+					{
+						newText += text.substring(0, n + "@:overload".length);
+						text = text.substring(n + "@:overload".length);
+						while (text.charAt(0) == " " || text.charAt(0) == "\t")
+						{
+							newText += text.charAt(0);
+							text = text.substring(1);
+						}
+						newText += "(";
+						text = text.substring(1);
+						var finish = findClosedBracket(text);
+						newText += text.substring(0, finish);
+						newText += " @:real_overload(" + text.substring(0, finish);
+						text = text.substring(finish);
+					}
+					newText += text;
+					
+					if (newText != text)
+					{
+						var destDir = tempDir + "/" + Path.directory(path);
+						if (destDir != "" && !FileSystem.exists(destDir))
+						{
+							FileSystem.createDirectory(destDir);
+						}
+						File.saveContent(tempDir + "/" + path, newText);
+					}
+				}
+			}
+		}
+	}
+	
+	static function findClosedBracket(text:String) : Int
+	{
+		var opened = 1;
+		for (i in 0...text.length)
+		{
+			if (text.charAt(i) == ")")
+			{
+				opened--;
+				if (opened == 0) return i + 1;
+			}
+			else
+			if (text.charAt(i) == "(")
+			{
+				opened++;
+			}
+		}
+		return -1;
+	}
+	
+	static function deleteDirectory(path:String)
+    {
+        if (FileSystem.exists(path))
+		{
+			for (file in FileSystem.readDirectory(path))
+			{
+				if (FileSystem.isDirectory(path + "/" + file))
+				{
+					deleteDirectory(path + "/" + file);
+				}
+				else
+				{
+					FileSystem.deleteFile(path + "/" + file);
+				}
+			}
+			FileSystem.deleteDirectory(path);
+		}
+    }
+	
 	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
 		if (applyNatives == null) applyNatives = false;
 		
-		Lib.println("generator: haxe extern");
-		Lib.println("outPath: " + outPath);
-		Lib.println("applyNatives: " + applyNatives);
+		Sys.println("generator: haxe extern");
+		Sys.println("outPath: " + outPath);
+		Sys.println("applyNatives: " + applyNatives);
 		
 		generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile);
 	}
@@ -22,18 +132,18 @@ class CodeGen
 	{
 		if (outPath == null || outPath == "") outPath = "tsclasses.d.ts";
 		
-		Lib.println("generator: typescript extern");
-		Lib.println("outPath: " + outPath);
+		Sys.println("generator: typescript extern");
+		Sys.println("outPath: " + outPath);
 		
 		generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile);
 	}
 	
 	static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String) : Void
 	{
-		Lib.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
-		Lib.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
-		Lib.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
-		Lib.println("applyNatives: " + applyNatives);
+		Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
+		Sys.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
+		Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
+		Sys.println("applyNatives: " + applyNatives);
 		
 		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
 		if (topLevelPackage != null && topLevelPackage != "") filter.unshift("+" + topLevelPackage);
