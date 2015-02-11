@@ -24,7 +24,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="True" />
-    <option additional="--macro &quot;CodeGen.typescriptExtern('externs/out.d.ts','testpack')&quot;" />
+    <option additional="--macro &quot;CodeGen.typescriptExtern('externs/out.d.ts','testpack')&quot;&#xA;--macro &quot;include('testpack')&quot;" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>

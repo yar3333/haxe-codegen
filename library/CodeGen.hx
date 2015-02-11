@@ -7,7 +7,75 @@ using StringTools;
 
 class CodeGen
 {
-	public static macro function preserveOverloads() : Void
+	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
+	{
+		if (outPath == null || outPath == "") outPath = "hxclasses";
+		if (applyNatives == null) applyNatives = false;
+		
+		Sys.println("generator: haxe extern");
+		Sys.println("outPath: " + outPath);
+		Sys.println("applyNatives: " + applyNatives);
+		
+		generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile);
+	}
+	
+	public static macro function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
+	{
+		if (outPath == null || outPath == "") outPath = "tsclasses.d.ts";
+		
+		Sys.println("generator: typescript extern");
+		Sys.println("outPath: " + outPath);
+		
+		generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile);
+	}
+	
+	static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String) : Void
+	{
+		Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
+		Sys.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
+		Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
+		Sys.println("applyNatives: " + applyNatives);
+		Sys.println("");
+		
+		preserveOverloads();
+		
+		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
+		if (topLevelPackage != null) filter.unshift("+" + topLevelPackage);
+		
+		var mapper = new Array<{ from:String, to:String }>();
+		if (mapperFile != null)
+		{
+			var lines = File.getContent(mapperFile).replace("\r\n", "\n").replace("\r", "\n").split("\n");
+			for (s in lines)
+			{
+				s = s.trim();
+				if (s == "" || s.startsWith("#") || s.startsWith("//")) continue;
+				
+				var m = s.split("=>");
+				if (m.length == 2)
+				{
+					var from  = m[0].trim();
+					var to = m[1].trim();
+					if (from != "" && to != "")
+					{
+						mapper.push({ from:from, to:to });
+					}
+					else
+					{
+						Context.fatalError("Mapper: bad type format '" + s+ "'.", Context.currentPos());
+					}
+				}
+				else
+				{
+					Context.fatalError("Mapper: bad type format '" + s+ "'.", Context.currentPos());
+				}
+			}
+		}
+		
+		new codegen.Processor(generator, applyNatives, filter, mapper);
+	}
+	
+	static function preserveOverloads() : Void
 	{
 		var tempDir = Path.removeTrailingSlashes(Sys.getEnv("temp")).replace("\\", "/");
 		tempDir += "/CodeGen_" + Math.round(Sys.time() * 1000) + "_"  + Std.random(10000);
@@ -25,7 +93,7 @@ class CodeGen
 		if (FileSystem.exists(tempDir))
 		{
 			haxe.macro.Compiler.addClassPath(tempDir);
-			//Context.onGenerate(function(_) deleteDirectory(tempDir));
+			Context.onGenerate(function(_) deleteDirectory(tempDir));
 		}
 	}
 	
@@ -115,69 +183,4 @@ class CodeGen
 			FileSystem.deleteDirectory(path);
 		}
     }
-	
-	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
-	{
-		if (outPath == null || outPath == "") outPath = "hxclasses";
-		if (applyNatives == null) applyNatives = false;
-		
-		Sys.println("generator: haxe extern");
-		Sys.println("outPath: " + outPath);
-		Sys.println("applyNatives: " + applyNatives);
-		
-		generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile);
-	}
-	
-	public static macro function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
-	{
-		if (outPath == null || outPath == "") outPath = "tsclasses.d.ts";
-		
-		Sys.println("generator: typescript extern");
-		Sys.println("outPath: " + outPath);
-		
-		generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile);
-	}
-	
-	static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String) : Void
-	{
-		Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "not specified"));
-		Sys.println("filterFile: " + (filterFile != null ? filterFile : "not specified"));
-		Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "not specified"));
-		Sys.println("applyNatives: " + applyNatives);
-		
-		var filter = filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : [];
-		if (topLevelPackage != null && topLevelPackage != "") filter.unshift("+" + topLevelPackage);
-		
-		var mapper = new Array<{ from:String, to:String }>();
-		if (mapperFile != null)
-		{
-			var lines = File.getContent(mapperFile).replace("\r\n", "\n").replace("\r", "\n").split("\n");
-			for (s in lines)
-			{
-				s = s.trim();
-				if (s == "" || s.startsWith("#") || s.startsWith("//")) continue;
-				
-				var m = s.split("=>");
-				if (m.length == 2)
-				{
-					var from  = m[0].trim();
-					var to = m[1].trim();
-					if (from != "" && to != "")
-					{
-						mapper.push({ from:from, to:to });
-					}
-					else
-					{
-						Context.fatalError("Mapper: bad type format '" + s+ "'.", Context.currentPos());
-					}
-				}
-				else
-				{
-					Context.fatalError("Mapper: bad type format '" + s+ "'.", Context.currentPos());
-				}
-			}
-		}
-
-		new codegen.Processor(generator, applyNatives, filter, mapper);
-	}
 }

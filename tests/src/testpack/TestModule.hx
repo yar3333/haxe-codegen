@@ -1,7 +1,7 @@
 package testpack;
 
-extern class TestClass
+extern class TestModule
 {
-	@:overload(function(a:Int):Void{})
-	static function f() : Void;
+	@:overload(function(src:String, options:Int) : String {})
+	static function play(src:String, ?interrupt:String, ?delay:Int, ?offset:Int, ?loop:Int, ?volume:Float, ?pan:Float, ?startTime:Int, ?duration:Int) : String;
 }

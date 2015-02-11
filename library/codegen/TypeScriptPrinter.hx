@@ -333,6 +333,7 @@ class TypeScriptPrinter {
 			case "Int", "Float": return "number";
 			case "String": return "string";
 			case "Bool": return "boolean";
+			case "Dynamic": return "any";
 			case _: return s;
 		}
 	}
