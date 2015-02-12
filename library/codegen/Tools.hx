@@ -10,7 +10,7 @@ using Lambda;
 
 class Tools
 {
-	public static function makeClassesExternAndRemovePrivateFields(types:Array<TypeDefinitionEx>)
+	public static function markAsExtern(types:Array<TypeDefinitionEx>)
 	{
 		for (tt in types)
 		{
@@ -19,6 +19,20 @@ class Tools
 				case TypeDefKind.TDClass:
 					tt.isExtern = true;
 					for (f in tt.fields) f.access = f.access.filter(function(a) return a != Access.APublic);
+					
+				case _:
+			};
+		}
+	}
+	
+	public static function removeInlineMethods(types:Array<TypeDefinitionEx>)
+	{
+		for (tt in types)
+		{
+			switch (tt.kind)
+			{
+				case TypeDefKind.TDClass:
+					tt.fields = tt.fields.filter(function(f) return !f.access.has(Access.AInline));
 					
 				case _:
 			};

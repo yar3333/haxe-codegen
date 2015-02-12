@@ -318,6 +318,18 @@ class Processor
 			superClass = superClass.superClass.t.get();
 		}
 		
+		switch (f.kind)
+		{
+			case FieldKind.FMethod(k):
+				switch (k)
+				{
+					case MethodKind.MethInline:
+						r.push(Access.AInline);
+					case _:
+				}
+			case _:
+		}
+		
 		return r;
 	}
 	

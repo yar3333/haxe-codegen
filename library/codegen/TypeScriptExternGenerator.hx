@@ -25,7 +25,8 @@ class TypeScriptExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
-		Tools.makeClassesExternAndRemovePrivateFields(types);
+		Tools.markAsExtern(types);
+		Tools.removeInlineMethods(types);
 		
 		Patcher.run
 		(

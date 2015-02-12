@@ -16,7 +16,8 @@ class HaxeExternGenerator implements IGenerator
 	{
 		for (type in types) type.meta = type.meta.filter(function(m) return m.name != ":build");
 		
-		Tools.makeClassesExternAndRemovePrivateFields(types);
+		Tools.markAsExtern(types);
+		Tools.removeInlineMethods(types);
 		
 		var modules = Tools.separateByModules(types);
 		for (module in modules.keys())
