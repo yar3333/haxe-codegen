@@ -4,8 +4,8 @@
   "tags": ["macro","js","ts","typescript"],
   "description": "A macro tool to generate haxe and none-haxe codes from existing haxe source codes.",
   "contributors": ["yar3333"],
-  "releasenote": "Typescript constructor return value fix. Haxe extern: remove @:build meta. Added \"applyNatives\" switch. Skip all types on empty filter bugfix. @noapi => @:noapi (to skip generate this meta for runtime). Saving docs (/** ... */).",
-  "version": "1.1.0",
+  "releasenote": "Exclude getters, setters, private types, @:compilerGenerated fields and inline methods from processing.",
+  "version": "1.2.0",
   "url": "https://bitbucket.org/yar3333/haxe-codegen",
   "dependencies": {}
 }
