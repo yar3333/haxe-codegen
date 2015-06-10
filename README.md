@@ -5,25 +5,24 @@ A macro tool to generate codes (haxe and none-haxe) from existing haxe source co
 Useful if you split your project into several separate-compiled parts and you want to have common api (extern classes).
 
 ### Usage ###
-Compile your project with '-lib codegen' and '--macro "CodeGen.**METHOD**(outPath,?topLevelPackage,?filterFile,?mapperFile)"'
-where **METHOD** can be:
+Compile your project with '-lib codegen' and one of the generation macro:
+	* --macro "CodeGen.haxeExtern(outPath,?applyNatives,?topLevelPackage,?filterFile,?mapperFile)"  - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
+	* --macro "CodeGen.typescriptExtern(outPath,?topLevelPackage,?filterFile,?mapperFile)" - generate typescript extern classes.
 
- * **haxeExtern** - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
- * **typescriptExtern** - generate typescript extern classes.
-
-Other arguments detail:
+Other arguments details:
 
  * outPath - path to output directory (for **haxeExtern**) or output file (for **typescriptExtern**);
- * topLevelPackage - a simple way to filter generated types;
- * filterFile - path to file with strings prefixed with "+" to include or "-" to exclude specified package/type (one per line);
- * mapperFile - path to file with strings in 'FromType => ToType' format (use to map types).
+ * applyNatives - are resolve @:native metas (default is `false` for **haxeExtern** and always is `true` for **typescriptExtern**);
+ * topLevelPackage - a simple way to filter generated types (specify '' to not exclude any packages);
+ * filterFile - path to a text file with lines prefixed with "+" to include or "-" to exclude specified package/type (one per line);
+ * mapperFile - path to a text file with lines in 'FromType => ToType' format (use to map types).
 
 Private and marked with @:noapi meta types/fields are ignored.
  
 Example:
 ```
 #!bash
-haxe -lib mylib -cp src -main Main -js out.js --no-output -lib codegen --macro "CodeGen.haxeExtern('hxclasses','myproj.filter','myproj.mapper')" 
+haxe -lib mylib -cp src -main Main -js dummy.js -lib codegen --macro "CodeGen.haxeExtern('hxclasses','','myproj.filter','myproj.mapper')" 
 ```
 
 **myproj.filter** file example:
