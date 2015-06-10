@@ -20,7 +20,7 @@ Other arguments details:
 
 **Private** and marked with `@:noapi` meta types/fields are ignored.
  
-Example:
+### Example ###
 ```
 #!bash
 haxe -lib mylib -cp src -main Main -js dummy.js -lib codegen --macro "CodeGen.haxeExtern('hxclasses','','myproj.filter','myproj.mapper')" 
