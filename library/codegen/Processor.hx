@@ -29,7 +29,7 @@ class Processor
 	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool) 
 	{
 		if (filter == null || filter.length == 0) filter = [ "+*" ];
 		if (mapper == null) mapper = [];
@@ -60,7 +60,25 @@ class Processor
 			
 			typeDefs = typeDefs.filter(function(tt) return !isExcludeType(tt));
 			
-			Patcher.run(typeDefs, Tools.mapType.bind(mapper));
+			Patcher.run
+			(
+				typeDefs,
+				function(tp:TypePath)
+				{
+					Tools.mapType(mapper, tp);
+					
+					if (isUnpackNull && tp.name == "Null" && tp.params.length == 1)
+					{
+						switch (tp.params[0])
+						{
+							case TypeParam.TPType(ct):	return ct;
+							case TypeParam.TPExpr(e):	// nothing to do
+						}
+					}
+					
+					return null;
+				}
+			);
 			
 			generator.generate(typeDefs);
 		});

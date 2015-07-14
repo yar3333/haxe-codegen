@@ -72,7 +72,7 @@ class CodeGen
 			}
 		}
 		
-		new codegen.Processor(generator, applyNatives, filter, mapper);
+		new codegen.Processor(generator, applyNatives, filter, mapper, true);
 	}
 	
 	static function preserveOverloads() : Void

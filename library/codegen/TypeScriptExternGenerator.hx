@@ -41,6 +41,8 @@ class TypeScriptExternGenerator implements IGenerator
 				{
 					tp.params = [];
 				}
+				
+				return null;
 			},
 			
 			function(field:Field)

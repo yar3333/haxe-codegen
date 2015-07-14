@@ -74,7 +74,7 @@ class HaxePrinter {
 	public function printComplexType(ct:ComplexType) return switch(ct) {
 		case TPath(tp): printTypePath(tp);
 		case TFunction(args, ret): (args.length>0 ? args.map(printComplexType).join(" -> ") : "Void") + " -> " + printComplexType(ret);
-		case TAnonymous(fields): "{ " + [for (f in fields) printField(f) + "; "].join("") + "}";
+		case TAnonymous(fields): "{ " + [for (f in fields) printFieldSingleLine(f) + "; "].join("") + "}";
 		case TParent(ct): "(" + printComplexType(ct) + ")";
 		case TOptional(ct): "?" + printComplexType(ct);
 		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.map(printField).join(", ")} }';
@@ -94,15 +94,31 @@ class HaxePrinter {
 		case AMacro: "macro";
 	}
 
-	public function printField(field:Field) return
-		printDoc(field.doc)
-		+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join('\n$tabs') + '\n$tabs' : "")
-		+ (field.access != null && field.access.length > 0 ? field.access.map(printAccess).join(" ") + " " : "")
-		+ switch(field.kind) {
-		  case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-		  case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-		  case FFun(func): 'function ${field.name}' + printFunction(func);
-		}
+	public function printFieldSingleLine(field:Field)
+	{
+		return printFieldInner(field, true);
+	}
+	
+	public function printField(field:Field)
+	{
+		return printFieldInner(field, false);
+	}
+	
+	function printFieldInner(field:Field, singleLine:Bool)
+	{
+		var metaSpacer = singleLine ? " " : '\n$tabs';
+		
+		return
+			printDoc(field.doc)
+			+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join(metaSpacer) + metaSpacer : "")
+			+ (field.access != null && field.access.length > 0 ? field.access.map(printAccess).join(" ") + " " : "")
+			+ switch(field.kind)
+			  {
+				case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+				case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+				case FFun(func): 'function ${field.name}' + printFunction(func);
+			  }
+	}
 
 	public function printTypeParamDecl(tpd:TypeParamDecl) return
 		tpd.name

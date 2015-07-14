@@ -141,7 +141,16 @@ class Tools
 			if (modules.exists(tt.module)) tt.module = modules.get(tt.module);
 		}
 		
-		Patcher.run(types, mapType.bind(mapper));
+		Patcher.run(types, function(tp:TypePath) { mapType(mapper, tp); return null; });
+	}
+	
+	public static function removeFieldMeta(field:Field, meta:String)
+	{
+		var i = 0; while (i < field.meta.length)
+		{
+			if (field.meta[i].name == meta) field.meta.splice(i, 1);
+			else i++;
+		}
 	}
 	
 	static function getFullTypeName(tt:{ module:String, name:String }) : String

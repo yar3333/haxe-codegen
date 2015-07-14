@@ -1,10 +1,18 @@
 package codegen;
 
 import haxe.io.Path;
+import haxe.macro.Expr;
 using StringTools;
 
 class HaxeExternGenerator implements IGenerator
 {
+	static var badMetas =
+	[
+		":has_untyped",
+		":value",
+		":profile"
+	];
+	
 	var outPath : String;
 	
 	public function new(outPath:String)
@@ -18,6 +26,15 @@ class HaxeExternGenerator implements IGenerator
 		
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);
+		
+		Patcher.run
+		(
+			types,
+			function(field:Field) : Void
+			{
+				for (meta in badMetas) Tools.removeFieldMeta(field, meta);
+			}
+		);
 		
 		var modules = Tools.separateByModules(types);
 		for (module in modules.keys())
