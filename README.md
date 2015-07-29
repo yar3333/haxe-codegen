@@ -21,22 +21,19 @@ Other arguments details:
 **Private** and marked with `@:noapi` meta types/fields are ignored.
  
 ### Example ###
-```
-#!bash
+```bash
 haxe -lib mylib -cp src -main Main -js dummy.js -lib codegen --macro "CodeGen.haxeExtern('hxclasses','','myproj.filter','myproj.mapper')" 
 ```
 
 **myproj.filter** file example:
-```
-#!bash
+```bash
 +mypack
 # comment
 -mypack.ClassToExclude
 ```
 
 **myproj.mapper** file example:
-```
-#!bash
+```bash
 mypack.MyTypeA => mypack.MyType1
 # comment
 mypack.MyTypeB => mypack.MyType2
