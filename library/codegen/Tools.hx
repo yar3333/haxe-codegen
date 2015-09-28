@@ -20,6 +20,9 @@ class Tools
 					tt.isExtern = true;
 					for (f in tt.fields) f.access = f.access.filter(function(a) return a != Access.APublic);
 					
+				case TypeDefKind.TDEnum:
+					tt.isExtern = true;
+					
 				case _:
 			};
 		}
