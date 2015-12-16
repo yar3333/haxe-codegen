@@ -108,7 +108,7 @@ class CodeGen
 			}
 			else
 			{
-				if (!processedFiles.exists(path))
+				if (Path.extension(path) == "hx" && !processedFiles.exists(path))
 				{
 					processedFiles.set(path, true);
 					var text = File.getContent(classPath + "/" + path);
