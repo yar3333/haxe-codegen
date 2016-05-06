@@ -7,6 +7,8 @@ using StringTools;
 
 class CodeGen
 {
+	public static var platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
+	
 	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
@@ -77,6 +79,8 @@ class CodeGen
 	
 	static function preserveOverloads() : Void
 	{
+		var dirsToExclude = platforms.filter(function(p) return !Context.defined(p));
+		
 		var tempDir = Path.removeTrailingSlashes(Sys.getEnv("temp")).replace("\\", "/");
 		tempDir += "/CodeGen_" + Math.round(Sys.time() * 1000) + "_"  + Std.random(10000);
 		
@@ -86,7 +90,7 @@ class CodeGen
 			classPath = Path.removeTrailingSlashes(classPath).replace("\\", "/");
 			if (classPath != "")
 			{
-				preserveOverloadsProcessDir(classPath, "", processedFiles, tempDir);
+				preserveOverloadsProcessDir(classPath, "", processedFiles, tempDir, dirsToExclude);
 			}
 		}
 		
@@ -97,14 +101,17 @@ class CodeGen
 		}
 	}
 	
-	static function preserveOverloadsProcessDir(classPath:String, relDirPath:String, processedFiles:Map<String, Bool>, tempDir:String) : Void
+	static function preserveOverloadsProcessDir(classPath:String, relDirPath:String, processedFiles:Map<String, Bool>, tempDir:String, dirsToExclude:Array<String>) : Void
 	{
 		for (file in FileSystem.readDirectory(classPath + (relDirPath != "" ? "/" + relDirPath : "")))
 		{
 			var path = (relDirPath != "" ? relDirPath + "/" : "") + file;
+			
+			if (dirsToExclude.indexOf(path) >= 0) continue;
+			
 			if (FileSystem.isDirectory(classPath + "/" + path))
 			{
-				preserveOverloadsProcessDir(classPath, path, processedFiles, tempDir);
+				preserveOverloadsProcessDir(classPath, path, processedFiles, tempDir, dirsToExclude);
 			}
 			else
 			{
@@ -112,34 +119,36 @@ class CodeGen
 				{
 					processedFiles.set(path, true);
 					var text = File.getContent(classPath + "/" + path);
-					var newText = "";
+					var newText = new StringBuf();
 					var n : Int;
 					while ((n=text.indexOf("@:overload")) >= 0)
 					{
-						newText += text.substring(0, n + "@:overload".length);
+						newText.add(text.substring(0, n + "@:overload".length));
 						text = text.substring(n + "@:overload".length);
 						while (text.charAt(0) == " " || text.charAt(0) == "\t")
 						{
-							newText += text.charAt(0);
+							newText.add(text.charAt(0));
 							text = text.substring(1);
 						}
-						newText += "(";
+						newText.add("(");
 						text = text.substring(1);
 						var finish = findClosedBracket(text);
-						newText += text.substring(0, finish);
-						newText += " @:real_overload(" + text.substring(0, finish);
+						newText.add(text.substring(0, finish));
+						newText.add(" @:real_overload(");
+						newText.add(text.substring(0, finish));
 						text = text.substring(finish);
 					}
-					newText += text;
+					newText.add(text);
 					
-					if (newText != text)
+					var newTextStr = newText.toString();
+					if (newTextStr != text)
 					{
 						var destDir = tempDir + "/" + Path.directory(path);
 						if (destDir != "" && !FileSystem.exists(destDir))
 						{
 							FileSystem.createDirectory(destDir);
 						}
-						File.saveContent(tempDir + "/" + path, newText);
+						File.saveContent(tempDir + "/" + path, newTextStr);
 					}
 				}
 			}
