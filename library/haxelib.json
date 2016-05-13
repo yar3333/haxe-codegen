@@ -4,8 +4,8 @@
   "tags": ["macro","js","ts","typescript"],
   "description": "A macro tool to generate haxe and none-haxe codes from existing haxe source codes.",
   "contributors": ["yar3333"],
-  "releasenote": "Ignore none-haxe files.",
-  "version": "1.2.6",
+  "releasenote": "Speedup: avoid processing std libraries for none-active platforms.",
+  "version": "1.3.0",
   "url": "https://bitbucket.org/yar3333/haxe-codegen",
   "dependencies": {}
 }
