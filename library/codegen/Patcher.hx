@@ -88,6 +88,8 @@ class Patcher
 	{
 		if (customProcessField != null) customProcessField(field);
 		
+		if (field.kind == null) return;
+		
 		switch (field.kind)
 		{
 			case FieldType.FFun(f):

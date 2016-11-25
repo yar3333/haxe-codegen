@@ -112,12 +112,15 @@ class HaxePrinter {
 			printDoc(field.doc)
 			+ (field.meta != null && field.meta.length > 0 ? field.meta.map(printMetadata).join(metaSpacer) + metaSpacer : "")
 			+ (field.access != null && field.access.length > 0 ? field.access.map(printAccess).join(" ") + " " : "")
-			+ switch(field.kind)
-			  {
-				case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-				case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-				case FFun(func): 'function ${field.name}' + printFunction(func);
-			  }
+			+ (field.kind != null
+				? switch(field.kind)
+				  {
+					case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+					case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
+					case FFun(func): 'function ${field.name}' + printFunction(func);
+				  }
+				: ""
+			  );
 	}
 
 	public function printTypeParamDecl(tpd:TypeParamDecl) return
@@ -248,11 +251,14 @@ class HaxePrinter {
 					+ "\n{\n"
 					+ [for (f in t.fields) {
 						var fstr = printField(f);
-						tabs + fstr + switch(f.kind) {
-							case FVar(_, _), FProp(_, _, _, _): ";";
-							case FFun(func) if (func.expr == null): ";";
-							case _: "";
-						};
+						tabs + fstr + (f.kind != null 
+							? switch(f.kind) {
+								case FVar(_, _), FProp(_, _, _, _): ";";
+								case FFun(func) if (func.expr == null): ";";
+								case _: "";
+							 }
+							: ""
+						);
 					}].join("\n")
 					+ "\n}";
 				case TDAlias(ct):

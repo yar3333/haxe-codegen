@@ -1,4 +1,4 @@
-package testpack;
+package root_pack.pack_a;
 
 enum TestEnum 
 {

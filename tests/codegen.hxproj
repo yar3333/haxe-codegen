@@ -8,7 +8,7 @@
     <movie fps="0" />
     <movie width="0" />
     <movie height="0" />
-    <movie version="1" />
+    <movie version="0" />
     <movie minorVersion="0" />
     <movie platform="JavaScript" />
     <movie background="#FFFFFF" />
@@ -24,7 +24,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="True" />
-    <option additional="--macro &quot;CodeGen.typescriptExtern('externs/out.d.ts','testpack')&quot;&#xA;--macro &quot;include('testpack')&quot;" />
+    <option additional="--macro &quot;CodeGen.haxeExtern('externs','root_pack')&quot;" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -40,7 +40,7 @@
     <hidden path="obj" />
   </hiddenPaths>
   <!-- Executed before build -->
-  <preBuildCommand />
+  <preBuildCommand>cmd /C rmdir /S /Q externs\root_pack 2&gt; nul &amp; echo.</preBuildCommand>
   <!-- Executed after build -->
   <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->

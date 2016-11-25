@@ -240,7 +240,7 @@ class Processor
 		return c.meta.exists(function(m) return m.name==":noapi");
 	}
 	
-	function getTypePath(e:Null<{ t:Ref<ClassType> }>) : TypePath
+	function getTypePath(e:Null<{ t:Ref<ClassType>, params:Array<Type> }>) : TypePath
 	{
 		if (e == null || e.t == null) return null;
 		var klass = e.t.get();
@@ -250,16 +250,10 @@ class Processor
 		{
 			pack: klass.pack,
 			name: klass.name,
-			params: klass.params.map(typeParameterToTypeParam),
+			params: e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
 			sub: null
 		};
 	}
-	
-	function typeParameterToTypeParam(param:TypeParameter) : TypeParam
-	{
-		return TypeParam.TPType(typeToComplexType(param.t));
-	}
-	
 	
 	function typeParameterToTypeParamDec(t:TypeParameter) : TypeParamDecl
 	{
