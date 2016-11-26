@@ -96,9 +96,11 @@ class Processor
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
 				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields));
+				fixGetterSetterReturnTypes(instanceFields);
 				
 				var staticFields = c.statics.get();
 				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields));
+				fixGetterSetterReturnTypes(staticFields);
 				
 				return
 				{
@@ -185,8 +187,40 @@ class Processor
 	
 	function isIncludeClassField(fields:Array<ClassField>, f:ClassField) : Bool
 	{
-		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated") && f.isPublic
-		   && (!f.name.startsWith("get_") && !f.name.startsWith("set_") || !fields.exists(function(f2) return f2.name == f.name.substring("get_".length)));
+		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated") && (
+			f.isPublic
+			|| (f.name.startsWith("get_") || f.name.startsWith("set_")) && fields.exists(function(f2) return f2.name == f.name.substring("get_".length))
+		);
+	}
+	
+	function fixGetterSetterReturnTypes(fields:Array<ClassField>)
+	{
+		for (f in fields)
+		{
+			if (f.name.startsWith("get_") || f.name.startsWith("set_"))
+			{
+				var propFields = fields.filter(function(f2) return f2.name == f.name.substring("get_".length));
+				if (propFields.length == 1)
+				{
+					switch (f.type)
+					{
+						case Type.TFun(args, ret):
+							switch (ret)
+							{
+								case Type.TMono(t):
+									if (t != null && t.get() == null)
+									{
+										f.type = Type.TFun(args, propFields[0].type);
+									}
+									
+								case _:
+							}
+							
+						case _:
+					}
+				}
+			}
+		}
 	}
 	
 	function createStube(c: { isPrivate:Bool, pack:Array<String>, name:String, module:String, meta:MetaAccess } ) : TypeDefinitionEx
