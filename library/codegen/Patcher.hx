@@ -34,7 +34,7 @@ class Patcher
 				case TypeDefKind.TDAlias(t):
 					processComplexType(t);
 					
-				case TypeDefKind.TDClass: // nothing to do
+				case TypeDefKind.TDClass(): // nothing to do
 				case TypeDefKind.TDEnum: // nothing to do
 				case TypeDefKind.TDStructure: // nothing to do
 			}

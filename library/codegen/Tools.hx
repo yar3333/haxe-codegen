@@ -16,7 +16,7 @@ class Tools
 		{
 			switch (tt.kind)
 			{
-				case TypeDefKind.TDClass:
+				case TypeDefKind.TDClass():
 					tt.isExtern = true;
 					for (f in tt.fields) f.access = f.access.filter(function(a) return a != Access.APublic);
 					
@@ -34,7 +34,7 @@ class Tools
 		{
 			switch (tt.kind)
 			{
-				case TypeDefKind.TDClass:
+				case TypeDefKind.TDClass():
 					tt.fields = tt.fields.filter(function(f) return !f.access.has(Access.AInline));
 					
 				case _:
