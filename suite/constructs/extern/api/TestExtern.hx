@@ -1,3 +1,4 @@
+@:expose
 extern class TestExtern
 {
 	@:overload(function(src:String, options:Int) : String {})
