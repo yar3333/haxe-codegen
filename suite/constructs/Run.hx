@@ -3,6 +3,8 @@
 class Run {
 	static var targets = [
 		new JsTarget(),
+		new NekoTarget(),
+		new CsTarget(),
 	];
 
 	static function main() {
@@ -83,7 +85,9 @@ private class Target {
 		this.name = name;
 	}
 
-	function runCommand(command:String, args:Array<String>) {
+	function runCommand(command:String, ?args:Array<String>) {
+		args = if (args == null) [] else args;
+
 		trace('Running ${command} ${[for (arg in args) '"${arg}"'].join(' ')}');
 		if (Sys.command(command, args) != 0) {
 			throw 'Command failed. CWD=${Sys.getCwd()}';
@@ -121,16 +125,7 @@ private class Target {
 		runCommand('haxe', apiCodegenArgs);
 
 		// Compile consumer
-		var consumerCompileArgs = [
-			'-cp',
-			getApiExternOutputPath(),
-			'-cp',
-			'consumer',
-			'-main',
-			'Run',
-			'-${name}',
-			getConsumerOutputPath(),
-		];
+		var consumerCompileArgs = getConsumerCompileArgs();
 		runCommand('haxe', consumerCompileArgs);
 
 		runConsumer();
@@ -153,6 +148,19 @@ private class Target {
 
 	function getConsumerOutputPath() {
 		return haxe.io.Path.join(['consumer', 'bin', 'Run.${name}']);
+	}
+
+	function getConsumerCompileArgs() {
+		return [
+			'-cp',
+			getApiExternOutputPath(),
+			'-cp',
+			'consumer',
+			'-main',
+			'Run',
+			'-${name}',
+			getConsumerOutputPath(),
+		];
 	}
 }
 
@@ -186,5 +194,46 @@ private class JsTarget extends Target {
 private class NekoTarget extends Target {
 	public function new() {
 		super('neko');
+	}
+}
+
+/**
+ Note that on compilation the Haxe CS target warns that we should use
+ -D dll_import. Right now I’m thinking that the generated externs from
+ codegen actually should provide the information we need, so that warning
+ can safely be ignored.
+ **/
+private class CsTarget extends Target {
+	// Use process to trap stderr/stdout
+	var useMono = new sys.io.Process('mono --version').exitCode() == 0;
+
+	public function new() {
+		super('cs');
+	}
+
+	function getApiAssemblyOutputPath() {
+		return '${getApiOutputPath()}/bin/api.cs.dll';
+	}
+
+	function getConsumerAssemblyOutputPath() {
+		return '${getConsumerOutputPath()}/bin/Run.exe';
+	}
+
+	override function getConsumerCompileArgs() {
+		return [
+			'-net-lib',
+			getApiAssemblyOutputPath(),
+		].concat(super.getConsumerCompileArgs());
+	}
+
+	override function runConsumer() {
+		// Try to use mono if it is available to support non-Windows
+		// platforms.
+		var assembly = getConsumerAssemblyOutputPath();
+		if (useMono) {
+			runCommand('mono', [assembly]);
+		} else {
+			runCommand(assembly);
+		}
 	}
 }
