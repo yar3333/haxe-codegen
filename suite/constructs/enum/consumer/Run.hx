@@ -17,6 +17,7 @@ class Run {
 		return switch (x) {
 			case TestEnum.LikeVar: -1;
 			case TestEnum.LikeFunc(a): a;
+			case TestEnum.Larry: -2;
 		}
 	}
 }

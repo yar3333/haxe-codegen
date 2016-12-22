@@ -3,6 +3,7 @@ package p;
 @:expose
 enum TestEnum
 {
+	Larry;
 	LikeVar;
 	LikeFunc(a:Int);
 }
