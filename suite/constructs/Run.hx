@@ -15,6 +15,7 @@ class Run {
 			Sys.setCwd(path);
 			try {
 				runConstruct();
+				trace('PASS ${path}');
 			} catch (ex:Dynamic) {
 				ret = 1;
 				trace(ex);
@@ -38,7 +39,6 @@ class Util {
 		if (!sys.FileSystem.exists(path)) {
 		} else if (sys.FileSystem.isDirectory(path)) {
 			for (entry in sys.FileSystem.readDirectory(path)) {
-				trace(entry);
 				if (entry == '.' || entry == '..') {
 					continue;
 				}
