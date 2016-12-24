@@ -1,5 +1,7 @@
 // Run this with haxe -x Run
 
+using Lambda;
+
 class Run {
 	static var targets = [
 		new JsTarget(),
@@ -8,7 +10,8 @@ class Run {
 	];
 
 	static function main() {
-		var ret = 0;
+		var passed = [];
+		var failed = [];
 		for (path in sys.FileSystem.readDirectory('.')) {
 			if (!sys.FileSystem.isDirectory(path)) {
 				continue;
@@ -17,15 +20,26 @@ class Run {
 			Sys.setCwd(path);
 			try {
 				runConstruct();
+				passed.push(path);
 				trace('PASS ${path}');
 			} catch (ex:Dynamic) {
-				ret = 1;
+				failed.push(path);
 				trace(ex);
 				trace('FAIL ${path}');
 			}
 			Sys.setCwd('..');
 		}
-		Sys.exit(ret);
+		trace('');
+		trace('Passed: ${passed.length}');
+		trace('Failed: ${failed.length}');
+		if (!failed.empty()) {
+			trace('');
+			trace('The following tests failed:');
+			for (path in failed) {
+				trace(path);
+			}
+		}
+		Sys.exit(if (failed.empty()) 0 else 1);
 	}
 
 	static function runConstruct() {
@@ -115,7 +129,18 @@ private class Target {
 
 		// codegen
 		var filterPath = haxe.io.Path.join(['api', 'bin', 'codegen.filter']);
-		Util.writeLines(filterPath, [for (module in apiModules) '+${module}']);
+
+		// Generate codegen.filter. Use user-provided one in api folder but
+		// fallback to generating from MODULES (works for most cases).
+		var codegenFilterOverridePath = haxe.io.Path.join(['api', 'codegen.filter']);
+		var codegenFilterLines;
+		if (sys.FileSystem.exists(codegenFilterOverridePath)) {
+			codegenFilterLines = Util.readLines(codegenFilterOverridePath);
+		} else {
+			codegenFilterLines = [for (module in apiModules) '+${module}'];
+		}
+		Util.writeLines(filterPath, codegenFilterLines);
+
 		var apiCodegenArgs = apiCompileArgs.concat([
 			'-cp',
 			haxe.io.Path.join(['..', '..', '..', 'library']),
