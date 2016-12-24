@@ -12,7 +12,8 @@ class Run {
 	static function main() {
 		var passed = [];
 		var failed = [];
-		for (path in sys.FileSystem.readDirectory('.')) {
+		var paths = if (Sys.args().empty()) sys.FileSystem.readDirectory('.') else Sys.args();
+		for (path in paths) {
 			if (!sys.FileSystem.isDirectory(path)) {
 				continue;
 			}
