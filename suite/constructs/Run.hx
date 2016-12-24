@@ -17,10 +17,9 @@ class Run {
 			if (!sys.FileSystem.isDirectory(path)) {
 				continue;
 			}
-			trace('descending to ${path}');
-			Sys.setCwd(path);
+			trace('Running ${path}');
 			try {
-				runConstruct();
+				runConstruct(path);
 				passed.push(path);
 				trace('PASS ${path}');
 			} catch (ex:Dynamic) {
@@ -28,7 +27,6 @@ class Run {
 				trace(ex);
 				trace('FAIL ${path}');
 			}
-			Sys.setCwd('..');
 		}
 		trace('');
 		trace('Passed: ${passed.length}');
@@ -43,9 +41,9 @@ class Run {
 		Sys.exit(if (failed.empty()) 0 else 1);
 	}
 
-	static function runConstruct() {
+	static function runConstruct(path) {
 		for (target in targets) {
-			target.run();
+			target.run(path);
 		}
 	}
 }
@@ -109,31 +107,32 @@ private class Target {
 		}
 	}
 
-	public function run() {
+	public function run(path) {
 		// Remove any artifacts from prior run.
-		for (path in ['api/bin', 'consumer/bin']) {
+		var binPaths = [for (relPath in ['api', 'consumer']) haxe.io.Path.join([path, relPath, 'bin'])];
+		for (path in binPaths) {
 			Util.rimraf(path);
 		}
 
 		// Load list of api modules.
-		var apiModules = Util.readLines(haxe.io.Path.join(['api', 'MODULES']));
+		var apiModules = Util.readLines(haxe.io.Path.join([path, 'api', 'MODULES']));
 
 		// Compile.
 		var apiCompileArgs = [
 			'-cp',
-			'api',
+			haxe.io.Path.join([path, 'api']),
 		].concat(apiModules).concat([
 			'-${name}',
-			getApiOutputPath(),
+			getApiOutputPath(path),
 		]);
 		runCommand('haxe', apiCompileArgs);
 
 		// codegen
-		var filterPath = haxe.io.Path.join(['api', 'bin', 'codegen.filter']);
+		var filterPath = haxe.io.Path.join([path, 'api', 'bin', 'codegen.filter']);
 
 		// Generate codegen.filter. Use user-provided one in api folder but
 		// fallback to generating from MODULES (works for most cases).
-		var codegenFilterOverridePath = haxe.io.Path.join(['api', 'codegen.filter']);
+		var codegenFilterOverridePath = haxe.io.Path.join([path, 'api', 'codegen.filter']);
 		var codegenFilterLines;
 		if (sys.FileSystem.exists(codegenFilterOverridePath)) {
 			codegenFilterLines = Util.readLines(codegenFilterOverridePath);
@@ -144,48 +143,48 @@ private class Target {
 
 		var apiCodegenArgs = apiCompileArgs.concat([
 			'-cp',
-			haxe.io.Path.join(['..', '..', '..', 'library']),
+			haxe.io.Path.join(['..', '..', 'library']),
 			'--macro',
-			'CodeGen.haxeExtern(\'${getApiExternOutputPath()}\',\'\',\'${filterPath}\')',
+			'CodeGen.haxeExtern(\'${getApiExternOutputPath(path)}\',\'\',\'${filterPath}\')',
 		]);
 		runCommand('haxe', apiCodegenArgs);
 
 		// Compile consumer
-		var consumerCompileArgs = getConsumerCompileArgs();
+		var consumerCompileArgs = getConsumerCompileArgs(path);
 		runCommand('haxe', consumerCompileArgs);
 
-		runConsumer();
+		runConsumer(path);
 	}
 
 	/**
 	 Run from within the consumer’s bin directory.
 	 **/
-	function runConsumer() {
+	function runConsumer(path) {
 		trace('Target ${name} does not support running the consumer yet, skipping.');
 	}
 
-	function getApiOutputPath() {
-		return haxe.io.Path.join(['api', 'bin', 'api.${name}']);
+	function getApiOutputPath(path) {
+		return haxe.io.Path.join([path, 'api', 'bin', 'api.${name}']);
 	}
 
-	function getApiExternOutputPath() {
-		return haxe.io.Path.join(['api', 'bin', 'externs']);
+	function getApiExternOutputPath(path) {
+		return haxe.io.Path.join([path, 'api', 'bin', 'externs']);
 	}
 
-	function getConsumerOutputPath() {
-		return haxe.io.Path.join(['consumer', 'bin', 'Run.${name}']);
+	function getConsumerOutputPath(path) {
+		return haxe.io.Path.join([path, 'consumer', 'bin', 'Run.${name}']);
 	}
 
-	function getConsumerCompileArgs() {
+	function getConsumerCompileArgs(path) {
 		return [
 			'-cp',
-			getApiExternOutputPath(),
+			getApiExternOutputPath(path),
 			'-cp',
-			'consumer',
+			haxe.io.Path.join([path, 'consumer']),
 			'-main',
 			'Run',
 			'-${name}',
-			getConsumerOutputPath(),
+			getConsumerOutputPath(path),
 		];
 	}
 }
@@ -195,13 +194,13 @@ private class JsTarget extends Target {
 		super('js');
 	}
 
-	override function runConsumer() {
+	override function runConsumer(path) {
 		// Concatenate the files.
-		var outputPath = '${getConsumerOutputPath()}.concatenated.js';
+		var outputPath = '${getConsumerOutputPath(path)}.concatenated.js';
 		var output = sys.io.File.write(outputPath);
 		// To get haxe to write exports to the global object, set exports=global:
 		output.writeString('exports = global;//Least coding way to get consumer module to see other module’s code\n');
-		for (inputPath in [getApiOutputPath(), getConsumerOutputPath()]) {
+		for (inputPath in [getApiOutputPath(path), getConsumerOutputPath(path)]) {
 			output.writeString('//BEGIN ${inputPath}\n');
 			var input = sys.io.File.read(inputPath);
 			output.writeInput(input);
@@ -237,25 +236,25 @@ private class CsTarget extends Target {
 		super('cs');
 	}
 
-	function getApiAssemblyOutputPath() {
-		return '${getApiOutputPath()}/bin/api.cs.dll';
+	function getApiAssemblyOutputPath(path) {
+		return haxe.io.Path.join([getApiOutputPath(path), 'bin', 'api.cs.dll']);
 	}
 
-	function getConsumerAssemblyOutputPath() {
-		return '${getConsumerOutputPath()}/bin/Run.exe';
+	function getConsumerAssemblyOutputPath(path) {
+		return haxe.io.Path.join([getConsumerOutputPath(path), 'bin', 'Run.exe']);
 	}
 
-	override function getConsumerCompileArgs() {
+	override function getConsumerCompileArgs(path) {
 		return [
 			'-net-lib',
-			getApiAssemblyOutputPath(),
-		].concat(super.getConsumerCompileArgs());
+			getApiAssemblyOutputPath(path),
+		].concat(super.getConsumerCompileArgs(path));
 	}
 
-	override function runConsumer() {
+	override function runConsumer(path) {
 		// Try to use mono if it is available to support non-Windows
 		// platforms.
-		var assembly = getConsumerAssemblyOutputPath();
+		var assembly = getConsumerAssemblyOutputPath(path);
 		if (useMono) {
 			runCommand('mono', [assembly]);
 		} else {
