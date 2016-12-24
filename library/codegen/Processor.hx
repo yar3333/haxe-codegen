@@ -283,9 +283,9 @@ class Processor
 		return
 		{
 			pack: klass.pack,
-			name: klass.name,
+			name: klass.module,
 			params: e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
-			sub: null
+			sub: klass.module == klass.name ? null : klass.name,
 		};
 	}
 	
