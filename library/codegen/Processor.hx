@@ -187,10 +187,16 @@ class Processor
 	
 	function isIncludeClassField(fields:Array<ClassField>, f:ClassField) : Bool
 	{
-		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated") && (
-			f.isPublic
-			|| (f.name.startsWith("get_") || f.name.startsWith("set_")) && fields.exists(function(f2) return f2.name == f.name.substring("get_".length))
-		);
+		// DO NOT change this to exclude private fields. See
+		// https://bitbucket.org/yar3333/haxe-codegen/issues/2
+		// for discussion. They must AT LEAST be included in
+		// the Haxe output so that Haxe can prevent you from
+		// reusing field names in subclasses (because Haxe’s
+		// “private” is actually protected and the JavaScript
+		// Haxe generator target does not support real private
+		// fields). Also, including them enables you to
+		// override them.
+		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated");
 	}
 	
 	function fixGetterSetterReturnTypes(fields:Array<ClassField>)
