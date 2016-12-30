@@ -6,3 +6,5 @@ tests/externs
 *\#*
 bin
 *.n
+*.orig
+*.rej
