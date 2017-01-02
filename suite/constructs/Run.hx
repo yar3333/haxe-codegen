@@ -1,6 +1,7 @@
 // Run this with haxe -x Run
 
 using Lambda;
+using StringTools;
 
 class Run {
 	static var targets = [
@@ -154,6 +155,47 @@ private class Target {
 		runCommand('haxe', consumerCompileArgs);
 
 		runConsumer(path);
+
+		// Process any expected failures
+		var expectedFailuresPath = haxe.io.Path.join([path, 'consumer', 'EXPECTED_FAILURES']);
+		if (sys.FileSystem.exists(expectedFailuresPath)) {
+			for (line in Util.readLines(expectedFailuresPath)) {
+				var lineParts = ~/^([^:]+):(.*)/;
+				if (lineParts.match(line)) {
+					var conditionalDefine = lineParts.matched(1);
+					var expectedError = lineParts.matched(2);
+
+					var expectedFailureCompileArgs = consumerCompileArgs.concat([
+						'-D',
+						conditionalDefine,
+					]);
+					trace('Running haxe ${[for (arg in expectedFailureCompileArgs) '"${arg}"'].join(' ')}');
+					var expectedFailureProcess = new sys.io.Process('haxe', expectedFailureCompileArgs);
+					var messages = [];
+					var stderrDone = false;
+					var stdoutDone = false;
+					while (!stderrDone || !stdoutDone) {
+						try {
+							messages.push(expectedFailureProcess.stdout.readLine());
+						} catch (ex:haxe.io.Eof) {
+							stdoutDone = true;
+						}
+						try {
+							messages.push(expectedFailureProcess.stderr.readLine());
+						} catch (ex:haxe.io.Eof) {
+							stderrDone = true;
+						}
+					}
+					var expectedFailureExitCode = expectedFailureProcess.exitCode();
+					if (expectedFailureExitCode == 0) {
+						throw 'Expected failure failed to fail: haxe exited with ${expectedFailureExitCode}';
+					}
+					if (messages.filter(function (message) return message.indexOf(expectedError) != -1).empty()) {
+						throw 'Expected failure: “${expectedError}”. Instead got the following messages:\r\n${messages.join('\r\n')}';
+					}
+				}
+			}
+		}
 	}
 
 	/**
