@@ -3,6 +3,7 @@ package codegen;
 import haxe.io.Path;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
+import haxe.macro.Type;
 import sys.FileSystem;
 import sys.io.File;
 using StringTools;
@@ -154,6 +155,17 @@ class Tools
 			if (field.meta[i].name == meta) field.meta.splice(i, 1);
 			else i++;
 		}
+	}
+	
+	public static function getShortClassName(fullClassName:String) : String
+	{
+		var n = fullClassName.lastIndexOf(".");
+		return n < 0 ? fullClassName : fullClassName.substring(n + 1);
+	}
+	
+	public static function getFullClassName(klass:ClassType) : String
+	{
+		return klass.pack.concat([klass.name]).join(".");
 	}
 	
 	static function getFullTypeName(tt:{ module:String, name:String }) : String

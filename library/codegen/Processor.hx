@@ -288,10 +288,10 @@ class Processor
 		
 		return
 		{
-			pack: klass.pack,
-			name: klass.module,
-			params: e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
-			sub: klass.module == klass.name ? null : klass.name,
+			pack : klass.pack,
+			name : Tools.getShortClassName(klass.module),
+			params : e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
+			sub : klass.module == Tools.getFullClassName(klass) ? null : klass.name,
 		};
 	}
 	
