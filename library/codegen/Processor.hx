@@ -29,7 +29,7 @@ class Processor
 	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool) 
 	{
 		if (filter == null || filter.length == 0) filter = [ "+*" ];
 		if (mapper == null) mapper = [];
@@ -52,7 +52,7 @@ class Processor
 			var typeDefs = [];
 			for (type in types)
 			{
-				var r = processType(type);
+				var r = processType(type, includePrivate);
 				if (r != null) typeDefs.push(r);
 			}
 			
@@ -84,7 +84,7 @@ class Processor
 		});
 	}
 	
-	function processType(type:Type) : TypeDefinitionEx
+	function processType(type:Type, includePrivate:Bool) : TypeDefinitionEx
 	{
 		switch (type)
 		{
@@ -95,11 +95,11 @@ class Processor
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
-				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields));
+				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields, _, includePrivate));
 				fixGetterSetterReturnTypes(instanceFields);
 				
 				var staticFields = c.statics.get();
-				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields));
+				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields, _, includePrivate));
 				fixGetterSetterReturnTypes(staticFields);
 				
 				return
@@ -185,18 +185,14 @@ class Processor
 		}
 	}
 	
-	function isIncludeClassField(fields:Array<ClassField>, f:ClassField) : Bool
+	function isIncludeClassField(fields:Array<ClassField>, f:ClassField, includePrivate:Bool) : Bool
 	{
-		// DO NOT change this to exclude private fields. See
-		// https://bitbucket.org/yar3333/haxe-codegen/issues/2
-		// for discussion. They must AT LEAST be included in
-		// the Haxe output so that Haxe can prevent you from
-		// reusing field names in subclasses (because Haxe’s
-		// “private” is actually protected and the JavaScript
-		// Haxe generator target does not support real private
-		// fields). Also, including them enables you to
-		// override them.
-		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated");
+		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated")
+			&& (
+					includePrivate
+				 || f.isPublic
+				 || (f.name.startsWith("get_") || f.name.startsWith("set_")) && fields.exists(function(f2) return f2.name == f.name.substring("get_".length))
+			   );
 	}
 	
 	function fixGetterSetterReturnTypes(fields:Array<ClassField>)

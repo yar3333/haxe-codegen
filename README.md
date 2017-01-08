@@ -7,18 +7,19 @@ Useful if you want to split your project into several separate-compiled parts an
 ### Usage ###
 Compile your project with `-lib codegen` and one of the generation macro:
 
- * `--macro "CodeGen.haxeExtern(outPath,?applyNatives,?topLevelPackage,?filterFile,?mapperFile)"` - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
- * `--macro "CodeGen.typescriptExtern(outPath,?topLevelPackage,?filterFile,?mapperFile)"` - generate typescript extern classes.
+ * `--macro "CodeGen.haxeExtern(outPath,?applyNatives,?topLevelPackage,?filterFile,?mapperFile,?includePrivate)"` - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
+ * `--macro "CodeGen.typescriptExtern(outPath,?topLevelPackage,?filterFile,?mapperFile,?includePrivate)"` - generate typescript extern classes.
 
 Other arguments details:
 
  * outPath - path to output directory (for **haxeExtern**) or output file (for **typescriptExtern**);
- * applyNatives - are resolve `@:native` metas (default is `false` for **haxeExtern** and always is `true` for **typescriptExtern**);
+ * applyNatives - are resolve `@:native` metas (default is `false` for **haxeExtern** and always `true` for **typescriptExtern**);
  * topLevelPackage - a simple way to filter generated types (specify `''` to not exclude any packages);
  * filterFile - path to a text file with lines prefixed with "+" to include or "-" to exclude specified package/type (one per line);
- * mapperFile - path to a text file with lines in 'FromType => ToType' format (use to map types).
+ * mapperFile - path to a text file with lines in 'FromType => ToType' format (use to map types);
+ * includePrivate - include private class members into output (default is `false`).
 
-**Private** and marked with `@:noapi` meta types/fields are ignored.
+You can mark types/fields with `@:noapi` meta to exclude from output.
  
 ### Example ###
 ```bash
