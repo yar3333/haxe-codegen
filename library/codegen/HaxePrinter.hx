@@ -71,9 +71,13 @@ class HaxePrinter {
 		+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
 
 	// TODO: check if this can cause loops
-	public function printComplexType(ct:ComplexType) return switch(ct) {
+	public function printComplexType(ct:ComplexType) return printComplexTypeRecursive(ct);
+	public function printComplexTypeRecursive(ct:ComplexType, ?functionUseParens:Bool) return switch(ct) {
 		case TPath(tp): printTypePath(tp);
-		case TFunction(args, ret): "(" + (args.length>0 ? args.map(printComplexType).join(" -> ") : "Void") + " -> " + printComplexType(ret) + ")";
+		case TFunction(args, ret):
+			// If within a function expression, wrap in parens. https://bitbucket.org/yar3333/haxe-codegen/issues/3
+			var wrap = functionUseParens ? {open: "(", close: ")"} : {open: "", close: ""};
+			wrap.open + (args.length>0 ? args.map(function (arg) return printComplexTypeRecursive(arg, true)).join(" -> ") : "Void") + " -> " + printComplexTypeRecursive(ret, true) + wrap.close;
 		case TAnonymous(fields): "{ " + [for (f in fields) printFieldSingleLine(f) + "; "].join("") + "}";
 		case TParent(ct): "(" + printComplexType(ct) + ")";
 		case TOptional(ct): "?" + printComplexType(ct);
