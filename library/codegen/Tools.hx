@@ -148,6 +148,18 @@ class Tools
 		Patcher.run(types, function(tp:TypePath) { mapType(mapper, tp); return null; });
 	}
 	
+	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, module:String)
+	{
+		for (tt in types)
+		{
+			var metas = tt.meta.filter(function(m) return m.name == ":jsRequire");
+			if (metas.length == 0)
+			{
+				tt.meta.push({	name:":jsRequire", params:[ macro $v{module}, macro $v{tt.name} ], pos:null });
+			}
+		}
+	}
+	
 	public static function removeFieldMeta(field:Field, meta:String)
 	{
 		var i = 0; while (i < field.meta.length)

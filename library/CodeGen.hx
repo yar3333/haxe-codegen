@@ -9,7 +9,7 @@ class CodeGen
 {
 	public static var platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
 	
-	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String, ?includePrivate:Bool) : Void
+	public static macro function haxeExtern(?outPath:String, ?applyNatives:Bool, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String, ?includePrivate:Bool, ?requireNodeModule:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
 		if (applyNatives == null) applyNatives = false;
@@ -17,7 +17,7 @@ class CodeGen
 		Sys.println("generator: haxe extern");
 		Sys.println("outPath: " + outPath);
 		
-		generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate);
+		generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule);
 	}
 	
 	public static macro function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String, ?includePrivate:Bool) : Void
@@ -27,16 +27,17 @@ class CodeGen
 		Sys.println("generator: typescript extern");
 		Sys.println("outPath: " + outPath);
 		
-		generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate);
+		generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null);
 	}
 	
-	static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String, includePrivate:Bool) : Void
+	static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String, includePrivate:Bool, requireNodeModule:String) : Void
 	{
 		Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "-"));
 		Sys.println("filterFile: " + (filterFile != null ? filterFile : "-"));
 		Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "-"));
 		Sys.println("applyNatives: " + applyNatives);
 		Sys.println("includePrivate: " + (!!includePrivate));
+		Sys.println("requireNodeModule: " + (requireNodeModule != null ? requireNodeModule : "-"));
 		Sys.println("");
 		
 		preserveOverloads();
@@ -74,7 +75,7 @@ class CodeGen
 			}
 		}
 		
-		new codegen.Processor(generator, applyNatives, filter, mapper, true, includePrivate);
+		new codegen.Processor(generator, applyNatives, filter, mapper, true, includePrivate, requireNodeModule);
 	}
 	
 	static function preserveOverloads() : Void

@@ -29,7 +29,7 @@ class Processor
 	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String) 
 	{
 		if (filter == null || filter.length == 0) filter = [ "+*" ];
 		if (mapper == null) mapper = [];
@@ -57,6 +57,8 @@ class Processor
 			}
 			
 			if (applyNatives) Tools.applyNatives(typeDefs);
+			
+			if (requireNodeModule != null && requireNodeModule != "") Tools.addJsRequireMeta(typeDefs, requireNodeModule);
 			
 			typeDefs = typeDefs.filter(function(tt) return !isExcludeType(tt));
 			

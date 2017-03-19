@@ -7,7 +7,7 @@ Useful if you want to split your project into several separate-compiled parts an
 ### Usage ###
 Compile your project with `-lib codegen` and one of the generation macro:
 
- * `--macro "CodeGen.haxeExtern(outPath,?applyNatives,?topLevelPackage,?filterFile,?mapperFile,?includePrivate)"` - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
+ * `--macro "CodeGen.haxeExtern(outPath,?applyNatives,?topLevelPackage,?filterFile,?mapperFile,?includePrivate,?requireNodeModule)"` - generate haxe extern classes like haxe compiler '--gen-hx-classes' option;
  * `--macro "CodeGen.typescriptExtern(outPath,?topLevelPackage,?filterFile,?mapperFile,?includePrivate)"` - generate typescript extern classes.
 
 Other arguments details:
@@ -17,7 +17,8 @@ Other arguments details:
  * topLevelPackage - a simple way to filter generated types (specify `''` to not exclude any packages);
  * filterFile - path to a text file with lines prefixed with "+" to include or "-" to exclude specified package/type (one per line);
  * mapperFile - path to a text file with lines in 'FromType => ToType' format (use to map types);
- * includePrivate - include private class members into output (default is `false`).
+ * includePrivate - include private class members into output (default is `false`);
+ * requireNodeModule - module name to generate `@:jsRequire` meta for classes.
 
 You can mark types/fields with `@:noapi` meta to exclude from output.
  
