@@ -5,7 +5,6 @@ class CodeGen
 {
 	public static var outPath : String = null;
 	public static var applyNatives : Bool = null;
-	public static var topLevelPackage : String = null;
 	public static var filterFile : String = null;
 	public static var mapperFile : String = null;
 	public static var includePrivate : Bool = null;
@@ -40,10 +39,10 @@ class CodeGen
 		switch (generatorType)
 		{
 			case "haxeExtern":
-				haxeExtern(outPath, applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers);
+				haxeExtern(outPath, applyNatives, null, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers);
 				
 			case "typescriptExtern":
-				typescriptExtern(outPath, topLevelPackage, filterFile, mapperFile, includePrivate, filters, mappers);
+				typescriptExtern(outPath, null, filterFile, mapperFile, includePrivate, filters, mappers);
 				
 			case _:
 				Sys.println("CodeGen.generate(): unknow generator type. Supported types: haxeExtern, typescriptExtern.");
