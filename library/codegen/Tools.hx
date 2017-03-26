@@ -116,13 +116,9 @@ class Tools
 		}
 	}
 	
-	/**
-	 * Rename types using @:native. Remove that meta after all.
-	 */
-	public static function applyNatives(types:Array<TypeDefinitionEx>)
+	public static function extractNativesMapper(types:Array<TypeDefinitionEx>) : Array<{ from:String, to:String }>
 	{
-		var mapper = new Array<{ from:String, to:String }>();
-		var modules = new Map<String, String>();
+		var r = new Array<{ from:String, to:String }>();
 		
 		for (tt in types)
 		{
@@ -130,10 +126,25 @@ class Tools
 			if (native.length > 0)
 			{
 				var to = ExprTools.getValue(native[native.length - 1].params[0]);
-				mapper.push({ from:getFullTypeName(tt), to:to });
-				
+				r.push({ from:getFullTypeName(tt), to:to });
 				tt.meta = tt.meta.filter(function(m) return m.name != ":native");
-				
+			}
+		}
+		
+		return r;
+	}
+	
+	public static function mapTypeDefs(types:Array<TypeDefinitionEx>, mapper:Array<{ from:String, to:String }>)
+	{
+		var modules = new Map<String, String>();
+		
+		for (tt in types)
+		{
+			var mappings = mapper.filter(function(m) return (getFullTypeName(tt) + ".").startsWith(m.from + "."));
+			if (mappings.length > 0)
+			{
+				var mapping = mappings[mappings.length - 1];
+				var to = mapping.to + getFullTypeName(tt).substring(mapping.from.length);
 				var oldModule = tt.module;
 				applyFullTypeNameToTypeDefinition(to, tt);
 				if (tt.module != oldModule) modules.set(oldModule, tt.module);
@@ -144,18 +155,22 @@ class Tools
 		{
 			if (modules.exists(tt.module)) tt.module = modules.get(tt.module);
 		}
-		
-		Patcher.run(types, function(tp:TypePath) { mapType(mapper, tp); return null; });
 	}
 	
 	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, module:String)
 	{
 		for (tt in types)
 		{
-			var metas = tt.meta.filter(function(m) return m.name == ":jsRequire");
-			if (metas.length == 0)
+			switch (tt.kind)
 			{
-				tt.meta.push({	name:":jsRequire", params:[ macro $v{module}, macro $v{tt.name} ], pos:null });
+				case TypeDefKind.TDClass(_, _, _), TypeDefKind.TDEnum:
+					var metas = tt.meta.filter(function(m) return m.name == ":jsRequire");
+					if (metas.length == 0)
+					{
+						tt.meta.push({	name:":jsRequire", params:[ macro $v{module}, macro $v{tt.name} ], pos:null });
+					}
+					
+				case _:
 			}
 		}
 	}

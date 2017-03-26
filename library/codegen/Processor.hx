@@ -52,15 +52,15 @@ class Processor
 			var typeDefs = [];
 			for (type in types)
 			{
-				var r = processType(type, includePrivate);
-				if (r != null) typeDefs.push(r);
+				var tt = processType(type, includePrivate);
+				if (tt != null && !isExcludeType(tt)) typeDefs.push(tt);
 			}
 			
-			if (applyNatives) Tools.applyNatives(typeDefs);
+			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(typeDefs));
 			
 			if (requireNodeModule != null && requireNodeModule != "") Tools.addJsRequireMeta(typeDefs, requireNodeModule);
 			
-			typeDefs = typeDefs.filter(function(tt) return !isExcludeType(tt));
+			Tools.mapTypeDefs(typeDefs, mapper);
 			
 			Patcher.run
 			(
