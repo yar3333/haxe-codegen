@@ -22,8 +22,6 @@ class HaxeExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
-		for (type in types) type.meta = type.meta.filter(function(m) return m.name != ":build" && m.name != ":autoBuild");
-		
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);
 		
