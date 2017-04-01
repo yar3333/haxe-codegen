@@ -6,7 +6,12 @@ using StringTools;
 
 class HaxeExternGenerator implements IGenerator
 {
-	static var badMetas =
+	static var badTypeMetas =
+	[
+		":build"
+	];
+	
+	static var badFieldMetas =
 	[
 		":has_untyped",
 		":value",
@@ -22,6 +27,8 @@ class HaxeExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
+		for (type in types) type.meta = type.meta.filter(function(m) return badTypeMetas.indexOf(m.name) < 0);
+		
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);
 		
@@ -30,7 +37,7 @@ class HaxeExternGenerator implements IGenerator
 			types,
 			function(field:Field) : Void
 			{
-				for (meta in badMetas) Tools.removeFieldMeta(field, meta);
+				for (meta in badFieldMetas) Tools.removeFieldMeta(field, meta);
 			}
 		);
 		
