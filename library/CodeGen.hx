@@ -27,12 +27,30 @@ class CodeGen
 		}
 	}
 	
-	public static function include(pack:String) filters.push("+" + pack);
-	public static function exclude(pack:String) filters.push("-" + pack);
-	public static function clearFilters() filters = [];
+	public static function include(pack:String)
+	{
+		for (p in parsePacks(pack)) filters.push("+" + pack);
+	}
 	
-	public static function map(from:String, to:String) mappers.push({ from:from, to:to });
-	public static function clearMappers() mappers = [];
+	public static function exclude(pack:String)
+	{
+		for (p in parsePacks(pack)) filters.push("-" + pack);
+	}
+	
+	public static function clearFilters()
+	{
+		filters = [];
+	}
+	
+	public static function map(from:String, to:String)
+	{
+		mappers.push({ from:from, to:to });
+	}
+	
+	public static function clearMappers()
+	{
+		mappers = [];
+	}
 	
 	public static function generate(generatorType:String)
 	{
@@ -68,5 +86,16 @@ class CodeGen
 		Sys.println("outPath: " + outPath);
 		
 		Manager.generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers);
+	}
+	
+	static function parsePacks(s:String) : Array<String>
+	{
+		var r = [];
+		for (p in ~/[\t\r\n ,;|]+/g.split(s))
+		{
+			p = p.trim();
+			if (p != "") r.push(p);
+		}
+		return r;
 	}
 }
