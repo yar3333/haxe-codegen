@@ -29,12 +29,12 @@ class CodeGen
 	
 	public static function include(pack:String)
 	{
-		for (p in parsePacks(pack)) filters.push("+" + pack);
+		for (p in parsePacks(pack)) filters.push("+" + p);
 	}
 	
 	public static function exclude(pack:String)
 	{
-		for (p in parsePacks(pack)) filters.push("-" + pack);
+		for (p in parsePacks(pack)) filters.push("-" + p);
 	}
 	
 	public static function clearFilters()
