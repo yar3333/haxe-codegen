@@ -112,7 +112,7 @@ class Tools
 		
 		for (m in mapper)
 		{
-			if (from.startsWith(m.from + ".")) Tools.stringToTypePath(m.to + from.substring(m.from.length), tp);
+			if (from.startsWith(m.from + ".")) Tools.stringToTypePath((m.to != "" ? m.to + "." : "") + from.substring(m.from.length + 1), tp);
 		}
 	}
 	
@@ -144,7 +144,7 @@ class Tools
 			if (mappings.length > 0)
 			{
 				var mapping = mappings[mappings.length - 1];
-				var to = mapping.to + getFullTypeName(tt).substring(mapping.from.length);
+				var to = (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(tt).substring(mapping.from.length + 1);
 				var oldModule = tt.module;
 				applyFullTypeNameToTypeDefinition(to, tt);
 				if (tt.module != oldModule) modules.set(oldModule, tt.module);
