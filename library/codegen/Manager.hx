@@ -15,13 +15,13 @@ class Manager
 		if (filter == null) filter = [];
 		if (mapper == null) mapper = [];
 		
-		Sys.print("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "-") + "\r");
-		Sys.print("filterFile: " + (filterFile != null ? filterFile : "-") + "\r");
-		Sys.print("mapperFile: " + (mapperFile != null ? mapperFile : "-") + "\r");
-		Sys.print("applyNatives: " + applyNatives + "\r");
-		Sys.print("includePrivate: " + (!!includePrivate) + "\r");
-		Sys.print("requireNodeModule: " + (requireNodeModule != null ? requireNodeModule : "-") + "\r");
-		Sys.print("\r");
+		Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "-"));
+		Sys.println("filterFile: " + (filterFile != null ? filterFile : "-"));
+		Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "-"));
+		Sys.println("applyNatives: " + applyNatives);
+		Sys.println("includePrivate: " + (!!includePrivate));
+		Sys.println("requireNodeModule: " + (requireNodeModule != null ? requireNodeModule : "-"));
+		Sys.println("");
 		
 		preserveOverloads();
 		

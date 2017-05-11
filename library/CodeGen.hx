@@ -23,7 +23,7 @@ class CodeGen
 		}
 		else
 		{
-			Sys.print("CodeGen.set(): unknow property '" + property + "'. Supported properties: " + fields.join(", ") + ".\r");
+			Sys.println("CodeGen.set(): unknow property '" + property + "'. Supported properties: " + fields.join(", ") + ".");
 		}
 	}
 	
@@ -63,7 +63,7 @@ class CodeGen
 				typescriptExtern(outPath, null, filterFile, mapperFile, includePrivate, filters, mappers);
 				
 			case _:
-				Sys.print("CodeGen.generate(): unknow generator type. Supported types: haxeExtern, typescriptExtern.\r");
+				Sys.println("CodeGen.generate(): unknow generator type. Supported types: haxeExtern, typescriptExtern.");
 		}
 	}
 	
@@ -72,8 +72,8 @@ class CodeGen
 		if (outPath == null || outPath == "") outPath = "hxclasses";
 		if (applyNatives == null) applyNatives = false;
 		
-		Sys.print("generator: haxe extern\r");
-		Sys.print("outPath: " + outPath + "\r");
+		Sys.println("generator: haxe extern");
+		Sys.println("outPath: " + outPath);
 		
 		Manager.generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers);
 	}
@@ -82,8 +82,8 @@ class CodeGen
 	{
 		if (outPath == null || outPath == "") outPath = "tsclasses.d.ts";
 		
-		Sys.print("generator: typescript extern\r");
-		Sys.print("outPath: " + outPath + "\r");
+		Sys.println("generator: typescript extern");
+		Sys.println("outPath: " + outPath);
 		
 		Manager.generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers);
 	}
