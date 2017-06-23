@@ -4,8 +4,8 @@
   "tags": ["macro","js","ts","typescript"],
   "description": "A macro tool to generate haxe and none-haxe codes from existing haxe source codes.",
   "contributors": ["yar3333"],
-  "releasenote": "Emit protected fields in externs.<br>\nFix subtype references in extends and implements.<br>\nIgnore private members by default (option `includePrivate`).<br>\nAdd ability to generate @:jsRequire meta.<br>\nNew optional API.<br>\nApply mapping to types itself.<br>\nRemove @:build for haxe extern.<br>\nInclude/exclude: support several packages in argument.<br>\nBacked out changeset: de812c12003f<br>\nTypescript: fix \"declare module\" to \"export namespace\".",
-  "version": "1.4.0",
+  "releasenote": "Ignore wrong class path.",
+  "version": "1.4.1",
   "url": "https://bitbucket.org/yar3333/haxe-codegen",
   "dependencies": {}
 }
