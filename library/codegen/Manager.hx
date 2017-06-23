@@ -88,7 +88,11 @@ class Manager
 	
 	static function preserveOverloadsProcessDir(classPath:String, relDirPath:String, processedFiles:Map<String, Bool>, tempDir:String, dirsToExclude:Array<String>) : Void
 	{
-		for (file in FileSystem.readDirectory(classPath + (relDirPath != "" ? "/" + relDirPath : "")))
+		var baseDir = classPath + (relDirPath != "" ? "/" + relDirPath : "");
+		
+		if (!FileSystem.exists(baseDir)) return;
+		
+		for (file in FileSystem.readDirectory(baseDir))
 		{
 			var path = (relDirPath != "" ? relDirPath + "/" : "") + file;
 			
