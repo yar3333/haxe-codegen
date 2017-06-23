@@ -76,7 +76,7 @@ class TypeScriptExternGenerator implements IGenerator
 			}
 			
 			var tab = pack != "" ? "\t" : "";
-			blocks.push((pack != "" ? "declare module " + pack + "\n{\n" : "") + tab + texts.join("\n\n").replace("\n", "\n" + tab) + (pack != "" ? "\n}" : ""));
+			blocks.push((pack != "" ? "export namespace " + pack + "\n{\n" : "") + tab + texts.join("\n\n").replace("\n", "\n" + tab) + (pack != "" ? "\n}" : ""));
 		}
 		
 		Tools.saveFileContent(outPath, blocks.join("\n\n"));

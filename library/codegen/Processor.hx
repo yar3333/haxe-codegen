@@ -29,7 +29,7 @@ class Processor
 	var filter : Array<String>;
 	var types : Array<Type>;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String) 
 	{
 		if (filter == null || filter.length == 0) filter = [ "+*" ];
 		if (mapper == null) mapper = [];
@@ -52,13 +52,15 @@ class Processor
 			var typeDefs = [];
 			for (type in types)
 			{
-				var r = processType(type);
-				if (r != null) typeDefs.push(r);
+				var tt = processType(type, includePrivate);
+				if (tt != null && !isExcludeType(tt)) typeDefs.push(tt);
 			}
 			
-			if (applyNatives) Tools.applyNatives(typeDefs);
+			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(typeDefs));
 			
-			typeDefs = typeDefs.filter(function(tt) return !isExcludeType(tt));
+			if (requireNodeModule != null && requireNodeModule != "") Tools.addJsRequireMeta(typeDefs, requireNodeModule);
+			
+			Tools.mapTypeDefs(typeDefs, mapper);
 			
 			Patcher.run
 			(
@@ -84,7 +86,7 @@ class Processor
 		});
 	}
 	
-	function processType(type:Type) : TypeDefinitionEx
+	function processType(type:Type, includePrivate:Bool) : TypeDefinitionEx
 	{
 		switch (type)
 		{
@@ -95,11 +97,11 @@ class Processor
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
-				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields));
+				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields, _, includePrivate));
 				fixGetterSetterReturnTypes(instanceFields);
 				
 				var staticFields = c.statics.get();
-				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields));
+				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields, _, includePrivate));
 				fixGetterSetterReturnTypes(staticFields);
 				
 				return
@@ -185,12 +187,14 @@ class Processor
 		}
 	}
 	
-	function isIncludeClassField(fields:Array<ClassField>, f:ClassField) : Bool
+	function isIncludeClassField(fields:Array<ClassField>, f:ClassField, includePrivate:Bool) : Bool
 	{
-		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated") && (
-			f.isPublic
-			|| (f.name.startsWith("get_") || f.name.startsWith("set_")) && fields.exists(function(f2) return f2.name == f.name.substring("get_".length))
-		);
+		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated")
+			&& (
+					includePrivate
+				 || f.isPublic
+				 || (f.name.startsWith("get_") || f.name.startsWith("set_")) && fields.exists(function(f2) return f2.name == f.name.substring("get_".length))
+			   );
 	}
 	
 	function fixGetterSetterReturnTypes(fields:Array<ClassField>)
@@ -282,10 +286,10 @@ class Processor
 		
 		return
 		{
-			pack: klass.pack,
-			name: klass.name,
-			params: e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
-			sub: null
+			pack : klass.pack,
+			name : Tools.getShortClassName(klass.module),
+			params : e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
+			sub : klass.module == Tools.getFullClassName(klass) ? null : klass.name,
 		};
 	}
 	

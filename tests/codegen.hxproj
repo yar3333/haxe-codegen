@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="out.js" />
+    <movie path="dummy.js" />
     <movie fps="0" />
     <movie width="0" />
     <movie height="0" />
@@ -24,7 +24,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="True" />
-    <option additional="--macro &quot;CodeGen.haxeExtern('externs','root_pack')&quot;" />
+    <option additional="--macro &quot;CodeGen.set('outPath','externs.d.ts')&quot;&#xA;--macro &quot;CodeGen.set('applyNatives',false)&quot;&#xA;--macro &quot;CodeGen.include('root_pack')&quot;&#xA;--macro &quot;CodeGen.set('includePrivate',true)&quot;&#xA;--macro &quot;CodeGen.map('root_pack','')&quot;&#xA;--macro &quot;CodeGen.generate('typescriptExtern')&quot;&#xA;--macro &quot;include('root_pack')&quot;" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
