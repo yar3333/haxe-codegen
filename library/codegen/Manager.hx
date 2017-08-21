@@ -10,18 +10,21 @@ class Manager
 {
 	public static var platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
 	
-	public static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String, includePrivate:Bool, requireNodeModule:String, filter:Array<String>, mapper:Array<{ from:String, to:String }>) : Void
+	public static function generate(generator:IGenerator, applyNatives:Bool, topLevelPackage:String, filterFile:String, mapperFile:String, includePrivate:Bool, requireNodeModule:String, filter:Array<String>, mapper:Array<{ from:String, to:String }>, verbose:Bool) : Void
 	{
 		if (filter == null) filter = [];
 		if (mapper == null) mapper = [];
 		
-		Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "-"));
-		Sys.println("filterFile: " + (filterFile != null ? filterFile : "-"));
-		Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "-"));
-		Sys.println("applyNatives: " + applyNatives);
-		Sys.println("includePrivate: " + (!!includePrivate));
-		Sys.println("requireNodeModule: " + (requireNodeModule != null ? requireNodeModule : "-"));
-		Sys.println("");
+		if (verbose)
+		{
+			Sys.println("topLevelPackage: " + (topLevelPackage != null ? topLevelPackage : "-"));
+			Sys.println("filterFile: " + (filterFile != null ? filterFile : "-"));
+			Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "-"));
+			Sys.println("applyNatives: " + applyNatives);
+			Sys.println("includePrivate: " + (!!includePrivate));
+			Sys.println("requireNodeModule: " + (requireNodeModule != null ? requireNodeModule : "-"));
+			Sys.println("");
+		}
 		
 		preserveOverloads();
 		

@@ -20,7 +20,7 @@ Other arguments details:
  * includePrivate - include private class members into output (default is `false`);
  * requireNodeModule - module name to generate `@:jsRequire` meta for classes.
 
-You can mark types/fields with `@:noapi` meta to exclude from output.
+You can mark types/fields with `@:noapi` meta to exclude them from output.
  
 ### Example ###
 ```bash

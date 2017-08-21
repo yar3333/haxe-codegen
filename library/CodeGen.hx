@@ -3,6 +3,8 @@ using StringTools;
 
 class CodeGen
 {
+	public static var verbose = false;
+	
 	public static var outPath : String = null;
 	public static var applyNatives : Bool = null;
 	public static var filterFile : String = null;
@@ -72,20 +74,26 @@ class CodeGen
 		if (outPath == null || outPath == "") outPath = "hxclasses";
 		if (applyNatives == null) applyNatives = false;
 		
-		Sys.println("generator: haxe extern");
-		Sys.println("outPath: " + outPath);
+		if (verbose)
+		{
+			Sys.println("generator: haxe extern");
+			Sys.println("outPath: " + outPath);
+		}
 		
-		Manager.generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers);
+		Manager.generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers, verbose);
 	}
 	
 	public static function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String, ?includePrivate:Bool, ?filters:Array<String>, ?mappers:Array<{ from:String, to:String }>) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "tsclasses.d.ts";
 		
-		Sys.println("generator: typescript extern");
-		Sys.println("outPath: " + outPath);
+		if (verbose)
+		{
+			Sys.println("generator: typescript extern");
+			Sys.println("outPath: " + outPath);
+		}
 		
-		Manager.generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers);
+		Manager.generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
 	}
 	
 	static function parsePacks(s:String) : Array<String>
