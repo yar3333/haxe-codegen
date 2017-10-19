@@ -295,12 +295,26 @@ class Processor
 	
 	function typeParameterToTypeParamDec(t:TypeParameter) : TypeParamDecl
 	{
-		return
+		switch (t.t)
 		{
-			name:t.name,
-			params:null,
-			constraints:null
-		};
+			case Type.TInst(tt, params):
+				var ttt = tt.get();
+				
+				switch (ttt.kind)
+				{
+					case ClassKind.KTypeParameter(constraints):
+						return
+						{
+							name: t.name,
+							params: null,
+							constraints: constraints.map(function(x) return typeToComplexType(x))
+						};
+					
+					case _: throw "Unexpected";
+				}
+				
+			case _: throw "Unexpected";
+		}
 	}
 	
 	function classFieldToField(klass:ClassType, isStatic:Bool, f:ClassField) : Field

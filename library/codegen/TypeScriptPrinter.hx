@@ -155,7 +155,11 @@ class TypeScriptPrinter {
 	public function printTypeParamDecl(tpd:TypeParamDecl) return
 		tpd.name
 		+ (tpd.params != null && tpd.params.length > 0 ? "<" + tpd.params.map(printTypeParamDecl).join(", ") + ">" : "")
-		+ (tpd.constraints != null && tpd.constraints.length > 0 ? ":(" + tpd.constraints.map(printComplexType).join(", ") + ")" : "");
+		+ (
+			tpd.constraints != null && tpd.constraints.length > 0
+				? ":" + (tpd.constraints.length > 1 ? "(" : "") + tpd.constraints.map(printComplexType).join(", ") + (tpd.constraints.length > 1 ? "(" : "")
+				: ""
+		  );
 
 	public function printFunctionArg(arg:FunctionArg) return
 		  arg.name
