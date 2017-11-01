@@ -68,7 +68,7 @@ class HaxePrinter {
 		(tp.pack.length > 0 ? tp.pack.join(".") + "." : "")
 		+ tp.name
 		+ (tp.sub != null ? '.${tp.sub}' : "")
-		+ (tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
+		+ (tp.params != null && tp.params.length > 0 ? "<" + tp.params.map(printTypeParam).join(", ") + ">" : "");
 
 	// TODO: check if this can cause loops
 	public function printComplexType(ct:ComplexType) return printComplexTypeRecursive(ct);
@@ -83,7 +83,7 @@ class HaxePrinter {
 
 	public function printMetadata(meta:MetadataEntry) return
 		'@${meta.name}'
-		+ (meta.params.length > 0 ? '(${printExprs(meta.params,", ")})' : "");
+	+ (meta.params != null && meta.params.length > 0 ? '(${printExprs(meta.params,", ")})' : "");
 
 	public function printAccess(access:Access) return switch(access) {
 		case AStatic: "static";
@@ -140,7 +140,7 @@ class HaxePrinter {
 		+ opt(arg.value, printExpr, " = ");
 
 	public function printFunction(func:Function) return
-		(func.params.length > 0 ? "<" + func.params.map(printTypeParamDecl).join(", ") + ">" : "")
+		(func.params != null && func.params.length > 0 ? "<" + func.params.map(printTypeParamDecl).join(", ") + ">" : "")
 		+ "(" + func.args.map(printFunctionArg).join(", ") + ")"
 		+ opt(func.ret, printComplexType, " : ")
 		+ opt(func.expr, printExpr, " ");
@@ -244,13 +244,13 @@ class HaxePrinter {
 					].join("\n")
 					+ "\n}";
 				case TDStructure:
-					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " =\n{\n"
+					"typedef " + t.name + (t.params != null && t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " =\n{\n"
 					+ [for (f in t.fields) {
 						tabs + printField(f) + ";";
 					}].join("\n")
 					+ "\n}";
 				case TDClass(superClass, interfaces, isInterface):
-					(isInterface ? "interface " : "class ") + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
+					(isInterface ? "interface " : "class ") + t.name + (t.params != null && t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (superClass != null ? " extends " + printTypePath(superClass) : "")
 					+ (interfaces != null ? (isInterface ? [for (tp in interfaces) " extends " + printTypePath(tp)] : [for (tp in interfaces) " implements " + printTypePath(tp)]).join("") : "")
 					+ "\n{\n"
@@ -267,7 +267,7 @@ class HaxePrinter {
 					}].join("\n")
 					+ "\n}";
 				case TDAlias(ct):
-					"typedef " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " ="
+					"typedef " + t.name + (t.params != null && t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + " ="
 					+ (switch(ct) {
 						case TExtend(tpl, fields): " " + printExtension(tpl, fields);
 						case TAnonymous(fields): "\n" + printStructure(fields);
@@ -276,7 +276,7 @@ class HaxePrinter {
 					+ ";";
 				case TDAbstract(tthis, from, to):
 					"abstract " + t.name
-					+ (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
+					+ (t.params != null && t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (tthis == null ? "" : "(" + printComplexType(tthis) + ")")
 					+ (from == null ? "" : [for (f in from) " from " + printComplexType(f)].join(""))
 					+ (to == null ? "" : [for (t in to) " to " + printComplexType(t)].join(""))
