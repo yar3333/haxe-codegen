@@ -129,7 +129,7 @@ class HaxePrinter {
 		+ (tpd.params != null && tpd.params.length > 0 ? "<" + tpd.params.map(printTypeParamDecl).join(", ") + ">" : "")
 		+ (
 			tpd.constraints != null && tpd.constraints.length > 0
-				? ":" + (tpd.constraints.length > 1 ? "(" : "") + tpd.constraints.map(printComplexType).join(", ") + (tpd.constraints.length > 1 ? "(" : "")
+				? ":" + (tpd.constraints.length > 1 ? "(" : "") + tpd.constraints.map(printComplexType).join(", ") + (tpd.constraints.length > 1 ? ")" : "")
 				: ""
 		  );
 
