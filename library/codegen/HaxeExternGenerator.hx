@@ -6,12 +6,12 @@ using StringTools;
 
 class HaxeExternGenerator implements IGenerator
 {
-	static var badTypeMetas =
+	static var stdTypeMetasToRemove =
 	[
 		":build"
 	];
 	
-	static var badFieldMetas =
+	static var stdFieldMetasToRemove =
 	[
 		":has_untyped",
 		":value",
@@ -19,10 +19,14 @@ class HaxeExternGenerator implements IGenerator
 	];
 	
 	var outPath : String;
+	var badTypeMetas : Array<String>;
+	var badFieldMetas : Array<String>;
 	
-	public function new(outPath:String)
+	public function new(outPath:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
 	{
 		this.outPath = outPath;
+		this.badTypeMetas = stdTypeMetasToRemove.concat(typeMetasToRemove);
+		this.badFieldMetas = stdFieldMetasToRemove.concat(fieldMetasToRemove);
 	}
 	
 	public function generate(types:Array<TypeDefinitionEx>)
