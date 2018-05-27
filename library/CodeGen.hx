@@ -11,6 +11,8 @@ class CodeGen
 	public static var mapperFile : String = null;
 	public static var includePrivate : Bool = null;
 	public static var requireNodeModule : String = null;
+	public static var typeMetasToRemove = new Array<String>();
+	public static var fieldMetasToRemove = new Array<String>();
 	
 	static var filters = new Array<String>();
 	static var mappers = new Array<{ from:String, to:String }>();
@@ -31,12 +33,22 @@ class CodeGen
 	
 	public static function include(pack:String)
 	{
-		for (p in parsePacks(pack)) filters.push("+" + p);
+		for (p in splitValues(pack)) filters.push("+" + p);
+	}
+	
+	public static function removeTypeMeta(meta:String)
+	{
+		for (m in splitValues(meta)) typeMetasToRemove.push(m);
+	}
+	
+	public static function removeFieldMeta(meta:String)
+	{
+		for (m in splitValues(meta)) fieldMetasToRemove.push(m);
 	}
 	
 	public static function exclude(pack:String)
 	{
-		for (p in parsePacks(pack)) filters.push("-" + p);
+		for (p in splitValues(pack)) filters.push("-" + p);
 	}
 	
 	public static function clearFilters()
@@ -80,7 +92,7 @@ class CodeGen
 			Sys.println("outPath: " + outPath);
 		}
 		
-		Manager.generate(new codegen.HaxeExternGenerator(outPath), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers, verbose);
+		Manager.generate(new codegen.HaxeExternGenerator(outPath, typeMetasToRemove, fieldMetasToRemove), applyNatives, topLevelPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers, verbose);
 	}
 	
 	public static function typescriptExtern(?outPath:String, ?topLevelPackage:String, ?filterFile:String, ?mapperFile:String, ?includePrivate:Bool, ?filters:Array<String>, ?mappers:Array<{ from:String, to:String }>) : Void
@@ -96,7 +108,7 @@ class CodeGen
 		Manager.generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
 	}
 	
-	static function parsePacks(s:String) : Array<String>
+	static function splitValues(s:String) : Array<String>
 	{
 		var r = [];
 		for (p in ~/[\t\r\n ,;|]+/g.split(s))
