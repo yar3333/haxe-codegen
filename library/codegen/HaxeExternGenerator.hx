@@ -8,14 +8,15 @@ class HaxeExternGenerator implements IGenerator
 {
 	static var stdTypeMetasToRemove =
 	[
-		":build"
+		":build",
+		":autoBuild"
 	];
 	
 	static var stdFieldMetasToRemove =
 	[
 		":has_untyped",
-		":value",
-		":profile"
+		":maybeUsed",
+		":value"
 	];
 	
 	var outPath : String;
