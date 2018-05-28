@@ -4,8 +4,8 @@
   "tags": ["macro","js","ts","typescript"],
   "description": "A macro tool to generate haxe and none-haxe codes from existing haxe source codes.",
   "contributors": ["yar3333"],
-  "releasenote": "Format callbacks accepting callback correctly using parens (thanks to Nathan Phillip Brink @binki).",
-  "version": "1.5.0",
+  "releasenote": "Add verbose option. Support type constraints. Add method to remove meta.",
+  "version": "1.6.0",
   "url": "https://bitbucket.org/yar3333/haxe-codegen",
   "dependencies": {}
 }
