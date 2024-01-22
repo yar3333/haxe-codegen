@@ -26,7 +26,7 @@ class Patcher
 		{
 			switch (type.kind)
 			{
-				case TypeDefKind.TDAbstract(t, from, to):
+				case TypeDefKind.TDAbstract(t, flags, from, to):
 					processComplexType(t);
 					processComplexTypes(from);
 					processComplexTypes(to);
@@ -37,6 +37,7 @@ class Patcher
 				case TypeDefKind.TDClass(_, _, _): // nothing to do
 				case TypeDefKind.TDEnum: // nothing to do
 				case TypeDefKind.TDStructure: // nothing to do
+                case TypeDefKind.TDField(_, ): // nothing to do
 			}
 			
 			if (type.fields != null) type.fields.iter(processField);
@@ -79,6 +80,12 @@ class Patcher
 				
 			case ComplexType.TOptional(t):
 				return processComplexType(t);
+
+            case ComplexType.TIntersection(tl):
+                processComplexTypes(tl);
+
+            case ComplexType.TNamed(n, t):
+                return processComplexType(t);
 		}
 		
 		return null;

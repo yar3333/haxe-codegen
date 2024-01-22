@@ -1,5 +1,6 @@
 package codegen;
 
+import haxe.macro.Type.FieldKind;
 import haxe.macro.ComplexTypeTools;
 import haxe.macro.Expr;
 using Lambda;
@@ -19,6 +20,7 @@ class TypeScriptPrinter {
 		case OpNot: "!";
 		case OpNeg: "-";
 		case OpNegBits: "~";
+		case OpSpread: "...";
 	}
 
 	public function printBinop(op:Binop) return switch(op) {
@@ -47,6 +49,8 @@ class TypeScriptPrinter {
 		case OpAssignOp(op):
 			printBinop(op)
 			+ "=";
+        case OpIn: "in";
+        case OpNullCoal: "??";
 	}
 	public function printString(s:String) {
 		return '"' + s.split("\n").join("\\n").split("\t").join("\\t").split("'").join("\\'").split('"').join("\\\"") #if sys .split("\x00").join("\\x00") #end + '"';
@@ -90,6 +94,8 @@ class TypeScriptPrinter {
 		case TParent(ct): "(" + printComplexType(ct) + ")";
 		case TOptional(ct): "?" + printComplexType(ct);
 		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.map(printField).join(", ")} }';
+        case TIntersection(tl): "" + [for (t in tl) printComplexType(t)].join(" & ") + "";
+        case TNamed(n, t): printComplexType(t);
 	}
 
 	public function printMetadatas(meta:Array<MetadataEntry>, joinStr:String, field:Field)
@@ -135,6 +141,10 @@ class TypeScriptPrinter {
 		case AInline: "inline";
 		case ADynamic: "dynamic";
 		case AMacro: "macro";
+		case AAbstract: "abstract";
+		case AExtern: "extern";
+		case AFinal: "final";
+		case AOverload: "overload";
 	}
 
 	public function printField(field:Field) return
@@ -151,6 +161,7 @@ class TypeScriptPrinter {
 				a.join("\n " +tabs);
 		  case FFun(func): field.name + printFunction(func);
 		}
+
 
 	public function printTypeParamDecl(tpd:TypeParamDecl) return
 		tpd.name
@@ -179,64 +190,68 @@ class TypeScriptPrinter {
 		+ opt(v.expr, printExpr, " = ");
 
 
-	public function printExpr(e:Expr) return e == null ? "#NULL" : switch(e.expr) {
-		case EConst(c): printConstant(c);
-		case EArray(e1, e2): '${printExpr(e1)}[${printExpr(e2)}]';
-		case EBinop(op, e1, e2): '${printExpr(e1)} ${printBinop(op)} ${printExpr(e2)}';
-		case EField(e1, n): '${printExpr(e1)}.$n';
-		case EParenthesis(e1): '(${printExpr(e1)})';
-		case EObjectDecl(fl):
-			"{ " + fl.map(function(fld) return '${fld.field} : ${printExpr(fld.expr)}').join(", ") + " }";
-		case EArrayDecl(el): '[${printExprs(el, ", ")}]';
-		case ECall(e1, el): '${printExpr(e1)}(${printExprs(el,", ")})';
-		case ENew(tp, el): 'new ${printTypePath(tp)}(${printExprs(el,", ")})';
-		case EUnop(op, true, e1): printExpr(e1) + printUnop(op);
-		case EUnop(op, false, e1): printUnop(op) + printExpr(e1);
-		case EFunction(no, func) if (no != null): 'function $no' + printFunction(func);
-		case EFunction(_, func): "function" +printFunction(func);
-		case EVars(vl): "var " +vl.map(printVar).join(", ");
-		case EBlock([]): '{ }';
-		case EBlock(el):
-			var old = tabs;
-			tabs += tabString;
-			var s = '{\n$tabs' + printExprs(el, ';\n$tabs');
-			tabs = old;
-			s + ';\n$tabs}';
-		case EFor(e1, e2): 'for (${printExpr(e1)}) ${printExpr(e2)}';
-		case EIn(e1, e2): '${printExpr(e1)} in ${printExpr(e2)}';
-		case EIf(econd, eif, null): 'if (${printExpr(econd)}) ${printExpr(eif)}';
-		case EIf(econd, eif, eelse): 'if (${printExpr(econd)}) ${printExpr(eif)} else ${printExpr(eelse)}';
-		case EWhile(econd, e1, true): 'while (${printExpr(econd)}) ${printExpr(e1)}';
-		case EWhile(econd, e1, false): 'do ${printExpr(e1)} while (${printExpr(econd)})';
-		case ESwitch(e1, cl, edef):
-			var old = tabs;
-			tabs += tabString;
-			var s = 'switch ${printExpr(e1)} {\n$tabs' +
-				cl.map(function(c)
-					return 'case ${printExprs(c.values, ", ")}'
-						+ (c.guard != null ? ' if (${printExpr(c.guard)}):' : ":")
-						+ (c.expr != null ? (opt(c.expr, printExpr)) + ";" : ""))
-				.join('\n$tabs');
-			if (edef != null)
-				s += '\n${tabs}default:' + (edef.expr == null ? "" : printExpr(edef) + ";");
-			tabs = old;
-			s + '\n$tabs}';
-		case ETry(e1, cl):
-			'try ${printExpr(e1)}'
-			+ cl.map(function(c) return ' catch(${c.name}:${printComplexType(c.type)}) ${printExpr(c.expr)}').join("");
-		case EReturn(eo): "return" + opt(eo, printExpr, " ");
-		case EBreak: "break";
-		case EContinue: "continue";
-		case EUntyped(e1): "untyped " +printExpr(e1);
-		case EThrow(e1): "throw " +printExpr(e1);
-		case ECast(e1, cto) if (cto != null): 'cast(${printExpr(e1)}, ${printComplexType(cto)})';
-		case ECast(e1, _): "cast " +printExpr(e1);
-		case EDisplay(e1, _): '#DISPLAY(${printExpr(e1)})';
-		case EDisplayNew(tp): '#DISPLAY(${printTypePath(tp)})';
-		case ETernary(econd, eif, eelse): '${printExpr(econd)} ? ${printExpr(eif)} : ${printExpr(eelse)}';
-		case ECheckType(e1, ct): '(${printExpr(e1)} : ${printComplexType(ct)})';
-		case EMeta(meta, e1): printMetadata(meta, null) + " " +printExpr(e1);
-	}
+	public function printExpr(e:Expr) 
+    {
+        if (e == null) return "#NULL";
+        
+        return switch(e.expr) {
+	        case EConst(c): printConstant(c);
+            case EArray(e1, e2): '${printExpr(e1)}[${printExpr(e2)}]';
+            case EBinop(op, e1, e2): '${printExpr(e1)} ${printBinop(op)} ${printExpr(e2)}';
+            case EField(e1, n): '${printExpr(e1)}.$n';
+            case EParenthesis(e1): '(${printExpr(e1)})';
+            case EObjectDecl(fl):
+                "{ " + fl.map(function(fld) return '${fld.field} : ${printExpr(fld.expr)}').join(", ") + " }";
+            case EArrayDecl(el): '[${printExprs(el, ", ")}]';
+            case ECall(e1, el): '${printExpr(e1)}(${printExprs(el,", ")})';
+            case ENew(tp, el): 'new ${printTypePath(tp)}(${printExprs(el,", ")})';
+            case EUnop(op, true, e1): printExpr(e1) + printUnop(op);
+            case EUnop(op, false, e1): printUnop(op) + printExpr(e1);
+            case EFunction(no, func) if (no != null): 'function $no' + printFunction(func);
+            case EFunction(_, func): "function" +printFunction(func);
+            case EVars(vl): "var " +vl.map(printVar).join(", ");
+            case EBlock([]): '{ }';
+            case EBlock(el):
+                var old = tabs;
+                tabs += tabString;
+                var s = '{\n$tabs' + printExprs(el, ';\n$tabs');
+                tabs = old;
+                s + ';\n$tabs}';
+            case EFor(e1, e2): 'for (${printExpr(e1)}) ${printExpr(e2)}';
+            case EIf(econd, eif, null): 'if (${printExpr(econd)}) ${printExpr(eif)}';
+            case EIf(econd, eif, eelse): 'if (${printExpr(econd)}) ${printExpr(eif)} else ${printExpr(eelse)}';
+            case EWhile(econd, e1, true): 'while (${printExpr(econd)}) ${printExpr(e1)}';
+            case EWhile(econd, e1, false): 'do ${printExpr(e1)} while (${printExpr(econd)})';
+            case ESwitch(e1, cl, edef):
+                var old = tabs;
+                tabs += tabString;
+                var s = 'switch ${printExpr(e1)} {\n$tabs' +
+                    cl.map(function(c)
+                        return 'case ${printExprs(c.values, ", ")}'
+                            + (c.guard != null ? ' if (${printExpr(c.guard)}):' : ":")
+                            + (c.expr != null ? (opt(c.expr, printExpr)) + ";" : ""))
+                    .join('\n$tabs');
+                if (edef != null)
+                    s += '\n${tabs}default:' + (edef.expr == null ? "" : printExpr(edef) + ";");
+                tabs = old;
+                s + '\n$tabs}';
+            case ETry(e1, cl):
+                'try ${printExpr(e1)}'
+                + cl.map(function(c) return ' catch(${c.name}:${printComplexType(c.type)}) ${printExpr(c.expr)}').join("");
+            case EReturn(eo): "return" + opt(eo, printExpr, " ");
+            case EBreak: "break";
+            case EContinue: "continue";
+            case EUntyped(e1): "untyped " +printExpr(e1);
+            case EThrow(e1): "throw " +printExpr(e1);
+            case ECast(e1, cto) if (cto != null): 'cast(${printExpr(e1)}, ${printComplexType(cto)})';
+            case ECast(e1, _): "cast " +printExpr(e1);
+            case EDisplay(e1, _): '#DISPLAY(${printExpr(e1)})';
+            case ETernary(econd, eif, eelse): '${printExpr(econd)} ? ${printExpr(eif)} : ${printExpr(eelse)}';
+            case ECheckType(e1, ct): '(${printExpr(e1)} : ${printComplexType(ct)})';
+            case EMeta(meta, e1): printMetadata(meta, null) + " " +printExpr(e1);
+            case EIs(e, t): printExpr(e) + " is " + printComplexType(t);
+        }
+    }
 
 	public function printExprs(el:Array<Expr>, sep:String) {
 		return el.map(printExpr).join(sep);
@@ -256,7 +271,10 @@ class TypeScriptPrinter {
 		var old = tabs;
 		tabs = tabString;
 
-		var str = t == null ? "#NULL" :
+        var str: String;
+
+        if (t == null) str = "#NULL";
+        else str = 
 			(printPackage && t.pack.length > 0 && t.pack[0] != "" ? "package " + t.pack.join(".") + ";\n" : "") +
 			printMetadatas(t.meta, " ", null) + (t.isExtern ? "export " : "") + switch (t.kind) {
 				case TDEnum:
@@ -298,7 +316,7 @@ class TypeScriptPrinter {
 						case TAnonymous(fields): "\n" + printStructure(fields);
 						case _: " " + printComplexType(ct) + ";";
 					};
-				case TDAbstract(tthis, from, to):
+				case TDAbstract(tthis, flags, from, to):
 					"abstract " + t.name
 					+ (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (tthis == null ? "" : "(" + printComplexType(tthis) + ")")
@@ -314,6 +332,7 @@ class TypeScriptPrinter {
 						};
 					}].join("\n")
 					+ "\n}";
+                case TDField(kind, access): printField({ access: access, pos: t.pos, kind: kind, name: t.name });
 			}
 
 		tabs = old;

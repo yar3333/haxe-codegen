@@ -1,4 +1,3 @@
-syntax: glob
 library.zip
 tests/externs
 *.swp

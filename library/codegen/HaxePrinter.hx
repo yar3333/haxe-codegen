@@ -18,6 +18,7 @@ class HaxePrinter {
 		case OpNot: "!";
 		case OpNeg: "-";
 		case OpNegBits: "~";
+        case OpSpread: "...";
 	}
 
 	public function printBinop(op:Binop) return switch(op) {
@@ -46,6 +47,8 @@ class HaxePrinter {
 		case OpAssignOp(op):
 			printBinop(op)
 			+ "=";
+        case OpIn: "in";
+        case OpNullCoal: "??";
 	}
 	public function printString(s:String) {
 		return '"' + s.split("\n").join("\\n").split("\t").join("\\t").split("'").join("\\'").split('"').join("\\\"") #if sys .split("\x00").join("\\x00") #end + '"';
@@ -79,6 +82,8 @@ class HaxePrinter {
 		case TParent(ct): "(" + printComplexType(ct) + ")";
 		case TOptional(ct): "?" + printComplexType(ct);
 		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.map(printField).join(", ")} }';
+		case TIntersection(tl):  [for (t in tl) printComplexType(t)].join("&");
+		case TNamed(n, t):  printComplexType(t);
 	}
 
 	public function printMetadata(meta:MetadataEntry) return
@@ -93,6 +98,10 @@ class HaxePrinter {
 		case AInline: "inline";
 		case ADynamic: "dynamic";
 		case AMacro: "macro";
+		case AAbstract: "abstract";
+		case AExtern: "extern";
+		case AFinal: "final";
+		case AOverload: "overload";
 	}
 
 	public function printFieldSingleLine(field:Field)
@@ -118,7 +127,7 @@ class HaxePrinter {
 				  {
 					case FVar(t, eo): 'var ${field.name}' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
 					case FProp(get, set, t, eo): 'var ${field.name}($get, $set)' + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
-					case FFun(func): 'function ${field.name}' + printFunction(func);
+					case FFun(func): 'function' + printFunction(FNamed(field.name), func);
 				  }
 				: ""
 			  );
@@ -139,11 +148,22 @@ class HaxePrinter {
 		+ opt(arg.type, printComplexType, ":")
 		+ opt(arg.value, printExpr, " = ");
 
-	public function printFunction(func:Function) return
-		(func.params != null && func.params.length > 0 ? "<" + func.params.map(printTypeParamDecl).join(", ") + ">" : "")
-		+ "(" + func.args.map(printFunctionArg).join(", ") + ")"
-		+ opt(func.ret, printComplexType, " : ")
-		+ opt(func.expr, printExpr, " ");
+	public function printFunction(kind:FunctionKind, func:Function) 
+    {
+        var r = "";
+        switch (kind)
+        {
+            case FNamed(name, inlined): r += " " + name;
+            case FAnonymous: // nothing
+            case FArrow: // nothing
+        }
+        return r
+            + (func.params != null && func.params.length > 0 ? "<" + func.params.map(printTypeParamDecl).join(", ") + ">" : "")
+            + "(" + func.args.map(printFunctionArg).join(", ") + ")"
+            + opt(func.ret, printComplexType, " : ")
+            + (kind == FArrow ? " -> " : "")
+            + opt(func.expr, printExpr, " ");
+    }
 
 	public function printVar(v:Var) return
 		v.name
@@ -151,63 +171,65 @@ class HaxePrinter {
 		+ opt(v.expr, printExpr, " = ");
 
 
-	public function printExpr(e:Expr) return e == null ? "#NULL" : switch(e.expr) {
-		case EConst(c): printConstant(c);
-		case EArray(e1, e2): '${printExpr(e1)}[${printExpr(e2)}]';
-		case EBinop(op, e1, e2): '${printExpr(e1)} ${printBinop(op)} ${printExpr(e2)}';
-		case EField(e1, n): '${printExpr(e1)}.$n';
-		case EParenthesis(e1): '(${printExpr(e1)})';
-		case EObjectDecl(fl):
-			"{ " + fl.map(function(fld) return '${fld.field} : ${printExpr(fld.expr)}').join(", ") + " }";
-		case EArrayDecl(el): '[${printExprs(el, ", ")}]';
-		case ECall(e1, el): '${printExpr(e1)}(${printExprs(el,", ")})';
-		case ENew(tp, el): 'new ${printTypePath(tp)}(${printExprs(el,", ")})';
-		case EUnop(op, true, e1): printExpr(e1) + printUnop(op);
-		case EUnop(op, false, e1): printUnop(op) + printExpr(e1);
-		case EFunction(no, func) if (no != null): 'function $no' + printFunction(func);
-		case EFunction(_, func): "function" +printFunction(func);
-		case EVars(vl): "var " +vl.map(printVar).join(", ");
-		case EBlock([]): '{ }';
-		case EBlock(el):
-			var old = tabs;
-			tabs += tabString;
-			var s = '{\n$tabs' + printExprs(el, ';\n$tabs');
-			tabs = old;
-			s + ';\n$tabs}';
-		case EFor(e1, e2): 'for (${printExpr(e1)}) ${printExpr(e2)}';
-		case EIn(e1, e2): '${printExpr(e1)} in ${printExpr(e2)}';
-		case EIf(econd, eif, null): 'if (${printExpr(econd)}) ${printExpr(eif)}';
-		case EIf(econd, eif, eelse): 'if (${printExpr(econd)}) ${printExpr(eif)} else ${printExpr(eelse)}';
-		case EWhile(econd, e1, true): 'while (${printExpr(econd)}) ${printExpr(e1)}';
-		case EWhile(econd, e1, false): 'do ${printExpr(e1)} while (${printExpr(econd)})';
-		case ESwitch(e1, cl, edef):
-			var old = tabs;
-			tabs += tabString;
-			var s = 'switch ${printExpr(e1)} {\n$tabs' +
-				cl.map(function(c)
-					return 'case ${printExprs(c.values, ", ")}'
-						+ (c.guard != null ? ' if (${printExpr(c.guard)}):' : ":")
-						+ (c.expr != null ? (opt(c.expr, printExpr)) + ";" : ""))
-				.join('\n$tabs');
-			if (edef != null)
-				s += '\n${tabs}default:' + (edef.expr == null ? "" : printExpr(edef) + ";");
-			tabs = old;
-			s + '\n$tabs}';
-		case ETry(e1, cl):
-			'try ${printExpr(e1)}'
-			+ cl.map(function(c) return ' catch(${c.name}:${printComplexType(c.type)}) ${printExpr(c.expr)}').join("");
-		case EReturn(eo): "return" + opt(eo, printExpr, " ");
-		case EBreak: "break";
-		case EContinue: "continue";
-		case EUntyped(e1): "untyped " +printExpr(e1);
-		case EThrow(e1): "throw " +printExpr(e1);
-		case ECast(e1, cto) if (cto != null): 'cast(${printExpr(e1)}, ${printComplexType(cto)})';
-		case ECast(e1, _): "cast " +printExpr(e1);
-		case EDisplay(e1, _): '#DISPLAY(${printExpr(e1)})';
-		case EDisplayNew(tp): '#DISPLAY(${printTypePath(tp)})';
-		case ETernary(econd, eif, eelse): '${printExpr(econd)} ? ${printExpr(eif)} : ${printExpr(eelse)}';
-		case ECheckType(e1, ct): '(${printExpr(e1)} : ${printComplexType(ct)})';
-		case EMeta(meta, e1): printMetadata(meta) + " " +printExpr(e1);
+	public function printExpr(e:Expr) {
+        if (e == null) return "#NULL";
+        return switch(e.expr)
+        {
+            case EConst(c): printConstant(c);
+            case EArray(e1, e2): '${printExpr(e1)}[${printExpr(e2)}]';
+            case EBinop(op, e1, e2): '${printExpr(e1)} ${printBinop(op)} ${printExpr(e2)}';
+            case EField(e1, n): '${printExpr(e1)}.$n';
+            case EParenthesis(e1): '(${printExpr(e1)})';
+            case EObjectDecl(fl):
+                "{ " + fl.map(function(fld) return '${fld.field} : ${printExpr(fld.expr)}').join(", ") + " }";
+            case EArrayDecl(el): '[${printExprs(el, ", ")}]';
+            case ECall(e1, el): '${printExpr(e1)}(${printExprs(el,", ")})';
+            case ENew(tp, el): 'new ${printTypePath(tp)}(${printExprs(el,", ")})';
+            case EUnop(op, true, e1): printExpr(e1) + printUnop(op);
+            case EUnop(op, false, e1): printUnop(op) + printExpr(e1);
+            case EFunction(kind, func): 'function' + printFunction(kind, func);
+            case EVars(vl): "var " +vl.map(printVar).join(", ");
+            case EBlock([]): '{ }';
+            case EBlock(el):
+                var old = tabs;
+                tabs += tabString;
+                var s = '{\n$tabs' + printExprs(el, ';\n$tabs');
+                tabs = old;
+                s + ';\n$tabs}';
+            case EFor(e1, e2): 'for (${printExpr(e1)}) ${printExpr(e2)}';
+            case EIf(econd, eif, null): 'if (${printExpr(econd)}) ${printExpr(eif)}';
+            case EIf(econd, eif, eelse): 'if (${printExpr(econd)}) ${printExpr(eif)} else ${printExpr(eelse)}';
+            case EWhile(econd, e1, true): 'while (${printExpr(econd)}) ${printExpr(e1)}';
+            case EWhile(econd, e1, false): 'do ${printExpr(e1)} while (${printExpr(econd)})';
+            case ESwitch(e1, cl, edef):
+                var old = tabs;
+                tabs += tabString;
+                var s = 'switch ${printExpr(e1)} {\n$tabs' +
+                    cl.map(function(c)
+                        return 'case ${printExprs(c.values, ", ")}'
+                            + (c.guard != null ? ' if (${printExpr(c.guard)}):' : ":")
+                            + (c.expr != null ? (opt(c.expr, printExpr)) + ";" : ""))
+                    .join('\n$tabs');
+                if (edef != null)
+                    s += '\n${tabs}default:' + (edef.expr == null ? "" : printExpr(edef) + ";");
+                tabs = old;
+                s + '\n$tabs}';
+            case ETry(e1, cl):
+                'try ${printExpr(e1)}'
+                + cl.map(function(c) return ' catch(${c.name}:${printComplexType(c.type)}) ${printExpr(c.expr)}').join("");
+            case EReturn(eo): "return" + opt(eo, printExpr, " ");
+            case EBreak: "break";
+            case EContinue: "continue";
+            case EUntyped(e1): "untyped " +printExpr(e1);
+            case EThrow(e1): "throw " +printExpr(e1);
+            case ECast(e1, cto) if (cto != null): 'cast(${printExpr(e1)}, ${printComplexType(cto)})';
+            case ECast(e1, _): "cast " +printExpr(e1);
+            case EDisplay(e1, _): '#DISPLAY(${printExpr(e1)})';
+            case ETernary(econd, eif, eelse): '${printExpr(econd)} ? ${printExpr(eif)} : ${printExpr(eelse)}';
+            case ECheckType(e1, ct): '(${printExpr(e1)} : ${printComplexType(ct)})';
+            case EMeta(meta, e1): printMetadata(meta) + " " +printExpr(e1);
+            case EIs(e, t): printExpr(e) + " is " + printComplexType(t);
+        }
 	}
 
 	public function printExprs(el:Array<Expr>, sep:String) {
@@ -228,7 +250,9 @@ class HaxePrinter {
 		var old = tabs;
 		tabs = tabString;
 
-		var str = t == null ? "#NULL" :
+		var str: String;
+        if (t == null) str = "#NULL";
+        else str =
 			(printPackage && t.pack.length > 0 && t.pack[0] != "" ? "package " + t.pack.join(".") + ";\n" : "") +
 			(t.meta != null && t.meta.length > 0 ? t.meta.map(printMetadata).join(" ") + " " : "") + (t.isExtern ? "extern " : "") + switch (t.kind) {
 				case TDEnum:
@@ -239,7 +263,7 @@ class HaxePrinter {
 						+ (switch(field.kind) {
 							case FVar(t, _): field.name + opt(t, printComplexType, ":");
 							case FProp(_, _, _, _): throw "FProp is invalid for TDEnum.";
-							case FFun(func): field.name + printFunction(func);
+							case FFun(func): printFunction(FunctionKind.FNamed(field.name), func);
 						}) + ";"
 					].join("\n")
 					+ "\n}";
@@ -274,7 +298,7 @@ class HaxePrinter {
 						case _: " " + printComplexType(ct);
 					})
 					+ ";";
-				case TDAbstract(tthis, from, to):
+				case TDAbstract(tthis, flags, from, to):
 					"abstract " + t.name
 					+ (t.params != null && t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (tthis == null ? "" : "(" + printComplexType(tthis) + ")")
@@ -290,6 +314,7 @@ class HaxePrinter {
 						};
 					}].join("\n")
 					+ "\n}";
+                case TDField(kind, access): printField({ name: t.name, pos: t.pos, kind: kind, access: access });
 			}
 
 		tabs = old;
