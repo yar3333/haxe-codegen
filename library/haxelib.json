@@ -4,8 +4,8 @@
   "tags": ["macro","js","ts","typescript"],
   "description": "A macro tool to generate haxe and none-haxe codes from existing haxe source codes.",
   "contributors": ["yar3333"],
-  "releasenote": "Add verbose option. Support type constraints. Add method to remove meta.",
-  "version": "1.6.0",
+  "releasenote": "constraints bugfix & haxe-4",
+  "version": "1.6.1",
   "url": "https://github.com/yar3333/haxe-codegen",
   "dependencies": {}
 }
