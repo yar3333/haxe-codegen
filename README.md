@@ -47,8 +47,8 @@ mypack.MyTypeB => mypack.MyType2
 ```
 
 ### Additional options ###
-By default CodeGen produce externs for types included for compilation and marked with @:expose macro.
-You can use @:noapi to force type excluding if type in included package. Also @:noapi works for fields.
+By default CodeGen produce externs for types included for compilation and marked with `@:expose` meta.
+You can use `@:noapi` to force type excluding if type in included package. Also `@:noapi` works for fields.
 
 ```shell
 # use to include private class members into output
