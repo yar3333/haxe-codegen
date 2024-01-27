@@ -30,15 +30,15 @@ Arguments details:
 --main Main
 --js dummy.js
 --library codegen
---macro CodeGen.haxeExtern('mynpmmodule','mypackA.mypackB','myRules.filter','myRules.mapper')
+--macro CodeGen.haxeExtern('mynpmmodule','mypackA.mypackB', 'out')
 ```
-**myRules.filter** file example:
+**Filter** file example:
 ```bash
 +mypack
 # comment
 -mypack.ClassToExclude
 ```
-**myRules.mapper** file example:
+**Mapper** file example:
 ```bash
 mypack.MyTypeA => mypack.MyType1
 # comment
