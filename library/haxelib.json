@@ -4,8 +4,8 @@
   "tags": ["macro","js","ts","typescript","javascript","extern"],
   "description": "A macro tool to generate externs from your code for JavaScript and TypeScript.",
   "contributors": ["yar3333"],
-  "releasenote": "* minor",
-  "version": "1.6.2",
+  "releasenote": "Major changes. Please, fix library using in your code. See README.",
+  "version": "1.7.0",
   "url": "https://github.com/yar3333/haxe-codegen",
   "dependencies": {}
 }
