@@ -1,5 +1,7 @@
 package codegen;
 
+#if macro
+
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -24,7 +26,7 @@ class Processor
 	
 	var filter : Array<String>;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String, outPackage:String) 
 	{
 		if (filter == null || filter.length == 0) filter = [];
 		if (mapper == null) mapper = [];
@@ -48,7 +50,20 @@ class Processor
 			for (type in types)
 			{
                 var tt = processType(type, includePrivate);
-				if (isIncludeType(tt)) typeDefs.push(tt);
+				if (isIncludeType(tt))
+                {
+                    typeDefs.push(tt);
+                    switch (type)
+                    {
+                        case TInst(t, _):
+                            addRttiPathMeta(t.get(), outPackage);
+
+                        case TEnum(t, _):
+                            addRttiPathMeta(t.get(), outPackage);
+                            
+                        case _:
+                    }
+                }
 			}
 
 			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(typeDefs));
@@ -80,6 +95,15 @@ class Processor
 			generator.generate(typeDefs);
 		});
 	}
+
+    private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String }, outPackage:String)
+    {
+        if (t.meta.get().exists(x -> x.name == ":rtti"))
+        {
+            var rttiPath = (outPackage != null && outPackage != "" ? outPackage + "." : "") + t.pack.concat([ t.name ]).join(".");
+            t.meta.add("rtti.path", [ macro $v{rttiPath} ], t.meta.get().find(x -> x.name == ":rtti").pos);
+        }
+    }
 	
 	function processType(type:Type, includePrivate:Bool) : TypeDefinitionEx
 	{
@@ -466,3 +490,5 @@ class Processor
 		}
 	}
 }
+
+#end

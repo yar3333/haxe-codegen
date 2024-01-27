@@ -1,5 +1,7 @@
 package codegen;
 
+#if macro
+
 import haxe.io.Path;
 import haxe.macro.Context;
 import sys.io.File;
@@ -10,7 +12,7 @@ class Manager
 {
 	public static var platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
 	
-	public static function generate(generator:IGenerator, applyNatives:Bool, filterFile:String, mapperFile:String, includePrivate:Bool, requireNodeModule:String, filter:Array<String>, mapper:Array<{ from:String, to:String }>, verbose:Bool) : Void
+	public static function generate(generator:IGenerator, applyNatives:Bool, outPackage:String, filterFile:String, mapperFile:String, includePrivate:Bool, requireNodeModule:String, filter:Array<String>, mapper:Array<{ from:String, to:String }>, verbose:Bool) : Void
 	{
 		if (filter == null) filter = [];
 		if (mapper == null) mapper = [];
@@ -59,7 +61,7 @@ class Manager
 			}
 		}
 		
-		new codegen.Processor(generator, applyNatives, filter, mapper, true, includePrivate, requireNodeModule);
+		new codegen.Processor(generator, applyNatives, filter, mapper, true, includePrivate, requireNodeModule, outPackage);
 	}
 	
 	static function preserveOverloads() : Void
@@ -182,3 +184,5 @@ class Manager
 		}
     }
 }
+
+#end

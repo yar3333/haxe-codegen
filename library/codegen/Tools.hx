@@ -1,5 +1,7 @@
 package codegen;
 
+#if macro
+
 import haxe.io.Path;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
@@ -225,3 +227,5 @@ class Tools
 		tt.name = p[p.length - 1];
 	}
 }
+
+#end

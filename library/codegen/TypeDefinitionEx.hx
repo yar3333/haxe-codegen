@@ -1,5 +1,7 @@
 package codegen;
 
+#if macro
+
 import haxe.macro.Expr;
 
 typedef TypeDefinitionEx =
@@ -9,3 +11,5 @@ typedef TypeDefinitionEx =
 	module:String,
 	isPrivate:Bool
 }
+
+#end

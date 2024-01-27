@@ -1,3 +1,5 @@
+#if macro
+
 import codegen.Manager;
 using StringTools;
 
@@ -53,7 +55,7 @@ class CodeGen
 		}
 		
         var generator = new codegen.HaxeExternGenerator(outPackage, outPath, typeMetasToRemove, fieldMetasToRemove);
-		Manager.generate(generator, false, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers, verbose);
+		Manager.generate(generator, false, outPackage, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers, verbose);
 	}
 	
 	public static function typescriptExtern(?outPath:String, ?filterFile:String, ?mapperFile:String) : Void
@@ -67,7 +69,7 @@ class CodeGen
 		}
 		
         var generator = new codegen.TypeScriptExternGenerator(outPath);
-		Manager.generate(generator, true, filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
+		Manager.generate(generator, true, "", filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
 	}
 	
 	static function splitValues(s:String) : Array<String>
@@ -81,3 +83,5 @@ class CodeGen
 		return r;
 	}
 }
+
+#end

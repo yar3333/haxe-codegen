@@ -1,5 +1,7 @@
 package codegen;
 
+#if macro
+
 import haxe.macro.Type.FieldKind;
 import haxe.macro.ComplexTypeTools;
 import haxe.macro.Expr;
@@ -362,3 +364,5 @@ class TypeScriptPrinter {
 		}
 	}
 }
+
+#end
