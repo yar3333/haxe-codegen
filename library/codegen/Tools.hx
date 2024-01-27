@@ -167,7 +167,8 @@ class Tools
 					var metas = tt.meta.filter(function(m) return m.name == ":jsRequire");
 					if (metas.length == 0)
 					{
-						tt.meta.push({	name:":jsRequire", params:[ macro $v{module}, macro $v{tt.name} ], pos:null });
+                        var fullName = (tt.pack != null && tt.pack.length > 0 ? tt.pack.join(".") + "." : "") + tt.name;
+						tt.meta.push({	name:":jsRequire", params:[ macro $v{module}, macro $v{fullName} ], pos:null });
 					}
 					
 				case _:

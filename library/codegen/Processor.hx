@@ -2,11 +2,7 @@ package codegen;
 
 import haxe.macro.Context;
 import haxe.macro.Expr;
-import haxe.macro.Printer;
-import sys.FileSystem;
-import sys.io.File;
 import haxe.macro.Type;
-import haxe.io.Path;
 using haxe.macro.Tools;
 using StringTools;
 using Lambda;
@@ -27,12 +23,13 @@ class Processor
 	];
 	
 	var filter : Array<String>;
-	var types : Array<Type>;
 	
 	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String) 
 	{
-		if (filter == null || filter.length == 0) filter = [ "+*" ];
+		if (filter == null || filter.length == 0) filter = [];
 		if (mapper == null) mapper = [];
+
+        filter = filter.map(x -> x.trim()).filter(x -> x != "" && !x.startsWith("//") && !x.startsWith("#"));
 		
 		this.filter = filter;
 		
@@ -45,17 +42,15 @@ class Processor
 			mapper.push({ from:key, to:stdTypes.get(key) });
 		}
 		
-		Context.onGenerate(function(innerTypes)
+		Context.onGenerate(function(types)
 		{
-			types = innerTypes;
-			
 			var typeDefs = [];
 			for (type in types)
 			{
-				var tt = processType(type, includePrivate);
-				if (tt != null && !isExcludeType(tt)) typeDefs.push(tt);
+                var tt = processType(type, includePrivate);
+				if (isIncludeType(tt)) typeDefs.push(tt);
 			}
-			
+
 			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(typeDefs));
 			
 			if (requireNodeModule != null && requireNodeModule != "") Tools.addJsRequireMeta(typeDefs, requireNodeModule);
@@ -93,7 +88,7 @@ class Processor
 			case Type.TInst(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
@@ -122,7 +117,7 @@ class Processor
 			case Type.TEnum(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				return
 				{
@@ -145,7 +140,7 @@ class Processor
 			case Type.TType(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				return
 				{
@@ -165,7 +160,7 @@ class Processor
 			case Type.TAbstract(t, params):
 				var c = t.get();
 				
-				if (isExcludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
 				
 				return
 				{
@@ -245,37 +240,27 @@ class Processor
 		};
 	}
 	
-	function isExcludeType(c:{ isPrivate:Bool, pack:Array<String>, name:String, meta:Metadata }) : Bool
+	function isIncludeType(c:{ isPrivate:Bool, pack:Array<String>, name:String, meta:Metadata }) : Bool
 	{
-		if (c.isPrivate) return true;
+		if (c == null || c.isPrivate) return false;
 		
-		var path = c.pack.concat([c.name]).join(".");
-		
-		if (filter.length > 0)
-		{
-			var included = false;
-			for (s in filter)
-			{
-				s = s.trim();
-				if (s == "" || s.startsWith("#") || s.startsWith("//")) continue;
-				if (s.startsWith("-"))
-				{
-					if (path == s.substring(1) || path.startsWith(s.substring(1) + ".")) return true;
-				}
-				else 
-				if (s.startsWith("+"))
-				{
-					if (s == "+*" || path == s.substring(1) || path.startsWith(s.substring(1) + ".")) included = true;
-				}
-				else
-				{
-					Context.fatalError("Unknow filter string '" + s + "'.", Context.currentPos());
-				}
-			}
-			if (!included) return true;
-		}
-		
-		return c.meta.exists(function(m) return m.name==":noapi");
+        if (c.meta.exists(x -> x.name == ":noapi")) return false;
+
+		var fullName = c.pack.concat([c.name]).join(".");
+
+        for (s in filter.filter(x -> x.startsWith("-")))
+        {
+            if (fullName == s.substring(1) || fullName.startsWith(s.substring(1) + ".")) return false;
+        }
+    
+        if (c.meta.exists(x -> x.name == ":expose")) return true;
+
+        for (s in filter.filter(x -> x.startsWith("+")))
+        {
+            if (s == "+*" || fullName == s.substring(1) || fullName.startsWith(s.substring(1) + ".")) return true;
+        }
+    
+		return false;
 	}
 	
 	function getTypePath(e:Null<{ t:Ref<ClassType>, params:Array<Type> }>) : TypePath
@@ -479,22 +464,5 @@ class Processor
 			case _:
 				return type.toComplexType();
 		}
-	}
-	
-	function getClass(klassPath:TypePath) : ClassType
-	{
-		if (klassPath == null) return null;
-		
-		for (type in types)
-		{
-			switch (type)
-			{
-				case Type.TInst(t, params):
-					var c = t.get();
-					if (c.pack.concat([c.name]).join(".") == klassPath.pack.concat([klassPath.name]).join(".")) return c;
-				case _:
-			}
-		}
-		return null;
 	}
 }

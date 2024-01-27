@@ -19,12 +19,14 @@ class HaxeExternGenerator implements IGenerator
 		":value"
 	];
 	
+	var outPackage : String;
 	var outPath : String;
 	var badTypeMetas : Array<String>;
 	var badFieldMetas : Array<String>;
 	
-	public function new(outPath:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
+	public function new(outPackage:String, outPath:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
 	{
+		this.outPackage = outPackage;
 		this.outPath = outPath;
 		this.badTypeMetas = stdTypeMetasToRemove.concat(typeMetasToRemove);
 		this.badFieldMetas = stdFieldMetasToRemove.concat(fieldMetasToRemove);
@@ -32,7 +34,7 @@ class HaxeExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
-		for (type in types) type.meta = type.meta.filter(function(m) return badTypeMetas.indexOf(m.name) < 0);
+		for (type in types) type.meta = type.meta.filter(function(m) return m.name != ":expose" && badTypeMetas.indexOf(m.name) < 0);
 		
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);
@@ -56,15 +58,17 @@ class HaxeExternGenerator implements IGenerator
 				texts.push
 				(
 					(tt.doc != null && tt.doc != "" ? "/**\n " + tt.doc.trim().split("\n").map(StringTools.trim).join("\n ")  + "\n */\n" : "")
-					+ new HaxePrinter().printTypeDefinition(tt, false)
+					+ new haxe.macro.Printer().printTypeDefinition(tt, false)
 				);
 			}
+
+            var prefixedModule = (outPackage != null && outPackage != "" ? outPackage + "." : "") + module;
 			
-			var pack = Path.directory(module.replace(".", "/")).replace("/", ".");
+			var pack = Path.directory(prefixedModule.replace(".", "/")).replace("/", ".");
 			
 			Tools.saveFileContent
 			(
-				outPath + "/" + module.replace(".", "/") + ".hx",
+				outPath + "/" + prefixedModule.replace(".", "/") + ".hx",
 				(pack != "" ? "package " + pack + ";\n\n" : "") + texts.join("\n\n")
 			);
 		}
