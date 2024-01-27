@@ -105,7 +105,7 @@ class CodeGen
 			Sys.println("outPath: " + outPath);
 		}
 		
-		Manager.generate(new codegen.TypeScriptExternGenerator(outPath), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
+		Manager.generate(new codegen.TypeScriptExternGenerator(outPath, topLevelPackage), true, topLevelPackage, filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
 	}
 	
 	static function splitValues(s:String) : Array<String>

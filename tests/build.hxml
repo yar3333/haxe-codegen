@@ -1,0 +1,13 @@
+--js dummy.js
+--no-output
+--library codegen
+--class-path src
+--main Main
+--macro CodeGen.include('root_pack')
+--macro CodeGen.set('outPath','externs.d.ts')
+--macro CodeGen.set('applyNatives',false)
+--macro CodeGen.set('includePrivate',true)
+--macro CodeGen.map('root_pack','')
+--macro CodeGen.generate('typescriptExtern')
+--macro include('root_pack')
+ 

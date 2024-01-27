@@ -113,7 +113,8 @@ class TypeScriptPrinter {
 			  + switch (field.kind)
 				{
 					case FFun(func):
-						var z = printExpr(meta.params[0]).substring("function".length);
+						var z = printExpr(meta.params[0]);
+                        z = z.substr(z.indexOf("("));
 						while (StringTools.endsWith(z, "}")) z = z.substring(0, z.length - 1);
 						while (StringTools.endsWith(z, " ")) z = z.substring(0, z.length - 1);
 						while (StringTools.endsWith(z, "{")) z = z.substring(0, z.length - 1);

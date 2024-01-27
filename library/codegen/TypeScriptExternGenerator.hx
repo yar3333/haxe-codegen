@@ -16,10 +16,12 @@ class TypeScriptExternGenerator implements IGenerator
 	];
 	
 	var outPath : String;
+	var topLevelPackage : String;
 	
-	public function new(outPath:String)
+	public function new(outPath:String, topLevelPackage:String)
 	{
 		this.outPath = outPath;
+		this.topLevelPackage = topLevelPackage;
 	}
 	
 	public function generate(types:Array<TypeDefinitionEx>)
@@ -73,6 +75,12 @@ class TypeScriptExternGenerator implements IGenerator
 					+ new TypeScriptPrinter().printTypeDefinition(tt, false)
 				);
 			}
+
+            if (topLevelPackage != null && topLevelPackage != "")
+            {
+                if (pack == topLevelPackage) pack = "";
+                else if (pack.startsWith(topLevelPackage + ".")) pack = pack.substr(topLevelPackage.length + 1);
+            }
 			
 			var tab = pack != "" ? "\t" : "";
 			blocks.push((pack != "" ? "export namespace " + pack + "\n{\n" : "") + tab + texts.join("\n\n").replace("\n", "\n" + tab) + (pack != "" ? "\n}" : ""));

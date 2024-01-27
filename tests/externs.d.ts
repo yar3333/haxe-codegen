@@ -1,3 +1,11 @@
+export namespace pack_a.TestGeneric
+{
+	export class TestBaseGeneric<MyT>
+	{
+		private myFunc(obj:MyT) : void;
+	}
+}
+
 export namespace pack_a
 {
 	export class TestClassC
@@ -9,8 +17,8 @@ export namespace pack_a
 	
 	export enum TestEnum
 	{
-		LikeFunc(a:number),
-		LikeVar
+		LikeVar,
+		LikeFunc(a:number)
 	}
 	
 	export class TestExtern
@@ -28,20 +36,12 @@ export namespace pack_a
 	{
 		get_myProp() : any
 	 	set_myProp(v:any) : any;
-		private get_myProp() : boolean;
-		private set_myProp(v) : any;
+		private get_myProp() : any;
+		private set_myProp(v:any) : any;
 	}
 }
 
 export class RootClass
 {
 	constructor();
-}
-
-export namespace pack_a.TestGeneric
-{
-	export class TestBaseGeneric<MyT>
-	{
-		private myFunc(obj:MyT) : void;
-	}
 }
