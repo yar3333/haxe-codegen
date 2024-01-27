@@ -1,8 +1,8 @@
 {
   "name": "codegen",
   "license": "LGPL",
-  "tags": ["macro","js","ts","typescript"],
-  "description": "A macro tool to generate haxe and none-haxe codes from existing haxe source codes.",
+  "tags": ["macro","js","ts","typescript", "javascript", "extern"],
+  "description": "A macro tool to generate externs from your code for JavaScript and TypeScript.",
   "contributors": ["yar3333"],
   "releasenote": "constraints bugfix & haxe-4",
   "version": "1.6.1",
