@@ -19,8 +19,8 @@ class Tools
 		{
 			switch (tt.kind)
 			{
-				case TypeDefKind.TDClass(_, _, _):
-					tt.isExtern = true;
+				case TypeDefKind.TDClass(_, _, isInterface):
+					if (!isInterface) tt.isExtern = true;
 					for (f in tt.fields) f.access = f.access.filter(function(a) return a != Access.APublic);
 					
 				case TypeDefKind.TDEnum:

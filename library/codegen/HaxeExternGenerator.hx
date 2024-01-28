@@ -11,7 +11,8 @@ class HaxeExternGenerator implements IGenerator
 	static var stdTypeMetasToRemove =
 	[
 		":build",
-		":autoBuild"
+		":autoBuild",
+		":expose"
 	];
 	
 	static var stdFieldMetasToRemove =
@@ -36,7 +37,7 @@ class HaxeExternGenerator implements IGenerator
 	
 	public function generate(types:Array<TypeDefinitionEx>)
 	{
-		for (type in types) type.meta = type.meta.filter(function(m) return m.name != ":expose" && badTypeMetas.indexOf(m.name) < 0);
+		for (type in types) type.meta = type.meta.filter(x -> badTypeMetas.indexOf(x.name) < 0);
 		
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);

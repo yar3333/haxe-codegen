@@ -53,22 +53,25 @@ class Processor
 				if (isIncludeType(tt))
                 {
                     typeDefs.push(tt);
-                    switch (type)
+                    
+                    if (!tt.isInterface)
                     {
-                        case TInst(t, _):
-                            addRttiPathMeta(t.get(), outPackage);
-
-                        case TEnum(t, _):
-                            addRttiPathMeta(t.get(), outPackage);
-                            
-                        case _:
-                    }
+                        switch (type)
+                        {
+                            case TInst(t, _): addRttiPathMeta(t.get(), outPackage);
+                            case TEnum(t, _): addRttiPathMeta(t.get(), outPackage);
+                            case _:
+                        }
+                    }   
                 }
 			}
 
 			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(typeDefs));
 			
-			if (requireNodeModule != null && requireNodeModule != "") Tools.addJsRequireMeta(typeDefs, requireNodeModule);
+			if (requireNodeModule != null && requireNodeModule != "")
+            {
+                Tools.addJsRequireMeta(typeDefs.filter(x -> !x.isInterface), requireNodeModule);
+            }
 			
 			Tools.mapTypeDefs(typeDefs, mapper);
 			
@@ -98,7 +101,7 @@ class Processor
 
     private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String }, outPackage:String)
     {
-        if (t.meta.get().exists(x -> x.name == ":rtti"))
+        if (t.meta.get().exists(x -> x.name == ":rtti") && !t.meta.get().exists(x -> x.name == "rtti.path"))
         {
             var rttiPath = (outPackage != null && outPackage != "" ? outPackage + "." : "") + t.pack.concat([ t.name ]).join(".");
             t.meta.add("rtti.path", [ macro $v{rttiPath} ], t.meta.get().find(x -> x.name == ":rtti").pos);
@@ -135,7 +138,8 @@ class Processor
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDClass(getTypePath(c.superClass), c.interfaces.map(getTypePath), c.isInterface),
 					fields : instanceFields.map(classFieldToField.bind(c, false)).concat(staticFields.map(classFieldToField.bind(c, true))),
-					isPrivate : c.isPrivate
+					isPrivate : c.isPrivate,
+                    isInterface: c.isInterface
 				};
 				
 			case Type.TEnum(t, params):
@@ -158,7 +162,8 @@ class Processor
 						.filter(function(f) return !f.meta.has(":noapi"))
 						.map(enumFieldToField)
 						.array(),
-					isPrivate : c.isPrivate
+					isPrivate : c.isPrivate,
+                    isInterface : false
 				};
 				
 			case Type.TType(t, params):
@@ -178,7 +183,8 @@ class Processor
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
 					fields : null,
-					isPrivate : c.isPrivate
+					isPrivate : c.isPrivate,
+                    isInterface : false
 				};
 				
 			case Type.TAbstract(t, params):
@@ -198,7 +204,8 @@ class Processor
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
 					fields : [], //c.constructs.map(enumFieldToField).array()
-					isPrivate : c.isPrivate
+					isPrivate : c.isPrivate,
+                    isInterface : false
 				};
 				
 			case _:
@@ -260,7 +267,8 @@ class Processor
 			isExtern : true,
 			kind : TypeDefKind.TDClass(null, null, false),
 			fields : [],
-			isPrivate : c.isPrivate
+			isPrivate : c.isPrivate,
+            isInterface : false
 		};
 	}
 	
