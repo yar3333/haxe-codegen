@@ -61,7 +61,7 @@ class HaxeExternGenerator implements IGenerator
 				texts.push
 				(
 					(tt.doc != null && tt.doc != "" ? "/**\n " + tt.doc.trim().split("\n").map(StringTools.trim).join("\n ")  + "\n */\n" : "")
-					+ new haxe.macro.Printer().printTypeDefinition(tt, false)
+					+ new HaxePrinter().printTypeDefinition(tt, false)
 				);
 			}
 
