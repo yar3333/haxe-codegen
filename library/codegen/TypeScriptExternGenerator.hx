@@ -14,7 +14,10 @@ class TypeScriptExternGenerator implements IGenerator
 		"Bool" => "boolean",
 		"Dynamic" => "any",
 		"Void" => "void",
-		"String" => "string"
+		"String" => "string",
+		"js.html.DocumentFragment" => "DocumentFragment",
+		"js.lib.Map" => "Map",
+        "Class" => "any",
 	];
 	
 	var outPath : String;

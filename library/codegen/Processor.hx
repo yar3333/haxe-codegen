@@ -52,6 +52,7 @@ class Processor
                 var tt = processType(type, includePrivate);
 				if (isIncludeType(tt))
                 {
+                    forceExposeForType(type);
                     typeDefs.push(tt);
                     
                     if (!tt.isInterface)
@@ -98,6 +99,18 @@ class Processor
 			generator.generate(typeDefs);
 		});
 	}
+
+    private function forceExposeForType(type:Type) : Void
+    {
+        switch (type)
+        {
+            case TInst(t, params): 
+                var klass = t.get();
+                if (!klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
+                
+            case _:
+        }
+    }
 
     private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String }, outPackage:String)
     {

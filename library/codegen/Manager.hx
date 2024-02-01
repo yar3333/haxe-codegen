@@ -66,7 +66,7 @@ class Manager
 	
 	static function preserveOverloads() : Void
 	{
-		var dirsToExclude = platforms.filter(function(p) return !Context.defined(p));
+		var dirsToExclude = platforms.filter(p -> !Context.defined(p));
 		
 		var tempDir = Path.removeTrailingSlashes(Sys.getEnv("temp")).replace("\\", "/");
 		tempDir += "/CodeGen_" + Math.round(Sys.time() * 1000) + "_"  + Std.random(10000);
@@ -84,7 +84,7 @@ class Manager
 		if (FileSystem.exists(tempDir))
 		{
 			haxe.macro.Compiler.addClassPath(tempDir);
-			Context.onGenerate(function(_) deleteDirectory(tempDir));
+			Context.onGenerate(_ -> deleteDirectory(tempDir));
 		}
 	}
 	
