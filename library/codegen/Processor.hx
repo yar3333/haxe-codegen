@@ -236,8 +236,8 @@ class Processor
             var prop = fields.find(x -> x.name == propName);
             if (prop != null)
             {
-                if (Context.defined("jsprop") && (prop.meta.has(":property") ))
-                return prop.isPublic || includePrivate;
+                //Context.warning("prop found: " + prop.name, Context.currentPos());
+                if (Context.defined("jsprop") && prop.meta.has(":property")) return false;
             }
         }
         
