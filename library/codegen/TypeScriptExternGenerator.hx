@@ -1,7 +1,5 @@
 package codegen;
 
-#if macro
-
 import haxe.macro.Expr;
 using StringTools;
 
@@ -85,5 +83,3 @@ class TypeScriptExternGenerator implements IGenerator
 		Tools.saveFileContent(outPath, blocks.join("\n\n"));
 	}
 }
-
-#end

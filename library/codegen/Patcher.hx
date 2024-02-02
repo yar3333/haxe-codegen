@@ -1,7 +1,5 @@
 package codegen;
 
-#if macro
-
 import haxe.macro.Expr;
 using Lambda;
 
@@ -171,5 +169,3 @@ class Patcher
 		return tp;
 	}
 }
-
-#end

@@ -1,7 +1,5 @@
 package codegen;
 
-#if macro
-
 import haxe.io.Path;
 import haxe.macro.Context;
 import sys.io.File;
@@ -184,5 +182,3 @@ class Manager
 		}
     }
 }
-
-#end

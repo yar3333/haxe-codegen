@@ -1,7 +1,6 @@
 package codegen;
 
-#if macro
-
+import haxe.macro.ExprTools;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -132,11 +131,11 @@ class Processor
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
-				instanceFields = instanceFields.filter(isIncludeClassField.bind(instanceFields, _, includePrivate));
+				instanceFields = instanceFields.filter(x -> isIncludeClassField(instanceFields, x, includePrivate));
 				fixGetterSetterReturnTypes(instanceFields);
 				
 				var staticFields = c.statics.get();
-				staticFields = staticFields.filter(isIncludeClassField.bind(staticFields, _, includePrivate));
+				staticFields = staticFields.filter(x -> isIncludeClassField(staticFields, x, includePrivate));
 				fixGetterSetterReturnTypes(staticFields);
 				
 				return
@@ -228,12 +227,21 @@ class Processor
 	
 	function isIncludeClassField(fields:Array<ClassField>, f:ClassField, includePrivate:Bool) : Bool
 	{
-		return !f.meta.has(":noapi") && !f.meta.has(":compilerGenerated")
-			&& (
-					includePrivate
-				 || f.isPublic
-				 || (f.name.startsWith("get_") || f.name.startsWith("set_")) && fields.exists(function(f2) return f2.name == f.name.substring("get_".length))
-			   );
+        if (f.meta.has(":noapi")) return false;
+        if (f.meta.has(":compilerGenerated")) return false;
+        
+        if (f.name.startsWith("get_") || f.name.startsWith("set_"))
+        {
+            var propName = f.name.substring("get_".length);
+            var prop = fields.find(x -> x.name == propName);
+            if (prop != null)
+            {
+                if (Context.defined("jsprop") && (prop.meta.has(":property") ))
+                return prop.isPublic || includePrivate;
+            }
+        }
+        
+        return f.isPublic || includePrivate;
 	}
 	
 	function fixGetterSetterReturnTypes(fields:Array<ClassField>)
@@ -511,5 +519,3 @@ class Processor
 		}
 	}
 }
-
-#end

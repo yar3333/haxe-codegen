@@ -1,7 +1,5 @@
 package codegen;
 
-#if macro
-
 import haxe.macro.Expr;
 
 typedef TypeDefinitionEx =
@@ -12,5 +10,3 @@ typedef TypeDefinitionEx =
 	isPrivate : Bool,
 	isInterface : Bool
 }
-
-#end

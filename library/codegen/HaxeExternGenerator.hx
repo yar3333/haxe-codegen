@@ -1,7 +1,5 @@
 package codegen;
 
-#if macro
-
 import haxe.io.Path;
 import haxe.macro.Expr;
 using StringTools;
@@ -75,5 +73,3 @@ class HaxeExternGenerator implements IGenerator
 		}
 	}
 }
-
-#end

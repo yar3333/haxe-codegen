@@ -1,9 +1,5 @@
 package codegen;
 
-#if macro
-
-import haxe.macro.Type.FieldKind;
-import haxe.macro.ComplexTypeTools;
 import haxe.macro.Expr;
 using Lambda;
 
@@ -138,8 +134,8 @@ class TypeScriptPrinter {
 
 	public function printAccess(access:Access) return switch(access) {
 		case AStatic: "static";
-		case APublic: "public";
-		case APrivate: "private";
+		case APublic: "";
+		case APrivate: "protected";
 		case AOverride: null;
 		case AInline: "inline";
 		case ADynamic: "dynamic";
@@ -364,5 +360,3 @@ class TypeScriptPrinter {
 		}
 	}
 }
-
-#end

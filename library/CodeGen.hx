@@ -1,5 +1,3 @@
-#if macro
-
 import codegen.Manager;
 using StringTools;
 
@@ -83,5 +81,3 @@ class CodeGen
 		return r;
 	}
 }
-
-#end

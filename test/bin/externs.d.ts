@@ -2,7 +2,7 @@ export namespace pack_a.TestGeneric
 {
 	export class TestBaseGeneric<MyT>
 	{
-		private myFunc(obj:MyT) : void;
+		protected myFunc(obj:MyT) : void;
 	}
 }
 
@@ -36,8 +36,8 @@ export namespace pack_a
 	{
 		get_myProp() : any
 	 	set_myProp(v:any) : any;
-		private get_myProp() : any;
-		private set_myProp(v:any) : any;
+		protected get_myProp() : any;
+		protected set_myProp(v:any) : any;
 	}
 }
 
