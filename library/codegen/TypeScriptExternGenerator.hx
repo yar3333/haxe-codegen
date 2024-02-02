@@ -5,6 +5,8 @@ using StringTools;
 
 class TypeScriptExternGenerator implements IGenerator
 {
+    public var language(default, never) = "typescript";
+
 	static var typeMap =
 	[
 		"Float" => "number",

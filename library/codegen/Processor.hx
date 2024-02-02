@@ -1,6 +1,5 @@
 package codegen;
 
-import haxe.macro.ExprTools;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -24,8 +23,9 @@ class Processor
 	];
 	
 	var filter : Array<String>;
+    var language: String;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String, outPackage:String) 
+	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String) 
 	{
 		if (filter == null || filter.length == 0) filter = [];
 		if (mapper == null) mapper = [];
@@ -33,6 +33,7 @@ class Processor
         filter = filter.map(x -> x.trim()).filter(x -> x != "" && !x.startsWith("//") && !x.startsWith("#"));
 		
 		this.filter = filter;
+		this.language = generator.language;
 		
 		mapper = mapper.copy();
 		mapper.reverse();
@@ -58,8 +59,8 @@ class Processor
                     {
                         switch (type)
                         {
-                            case TInst(t, _): addRttiPathMeta(t.get(), outPackage);
-                            case TEnum(t, _): addRttiPathMeta(t.get(), outPackage);
+                            case TInst(t, _): addRttiPathMeta(t.get());
+                            case TEnum(t, _): addRttiPathMeta(t.get());
                             case _:
                         }
                     }   
@@ -72,9 +73,9 @@ class Processor
             {
                 Tools.addJsRequireMeta(typeDefs.filter(x -> !x.isInterface), requireNodeModule);
             }
-			
+
 			Tools.mapTypeDefs(typeDefs, mapper);
-			
+
 			Patcher.run
 			(
 				typeDefs,
@@ -111,11 +112,11 @@ class Processor
         }
     }
 
-    private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String }, outPackage:String)
+    private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String })
     {
         if (t.meta.get().exists(x -> x.name == ":rtti") && !t.meta.get().exists(x -> x.name == "rtti.path"))
         {
-            var rttiPath = (outPackage != null && outPackage != "" ? outPackage + "." : "") + t.pack.concat([ t.name ]).join(".");
+            var rttiPath = t.pack.concat([ t.name ]).join(".");
             t.meta.add("rtti.path", [ macro $v{rttiPath} ], t.meta.get().find(x -> x.name == ":rtti").pos);
         }
     }
@@ -137,7 +138,7 @@ class Processor
 				var staticFields = c.statics.get();
 				staticFields = staticFields.filter(x -> isIncludeClassField(staticFields, x, includePrivate));
 				fixGetterSetterReturnTypes(staticFields);
-				
+
 				return
 				{
 					doc : c.doc,
@@ -171,7 +172,7 @@ class Processor
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDEnum,
 					fields : c.constructs
-						.filter(function(f) return !f.meta.has(":noapi"))
+						.filter(x -> !x.meta.has(":noapi") && !x.meta.has(":noapi_" + language))
 						.map(enumFieldToField)
 						.array(),
 					isPrivate : c.isPrivate,
@@ -182,7 +183,7 @@ class Processor
 				var c = t.get();
 				
 				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
-				
+
 				return
 				{
 					doc : c.doc,
@@ -228,6 +229,7 @@ class Processor
 	function isIncludeClassField(fields:Array<ClassField>, f:ClassField, includePrivate:Bool) : Bool
 	{
         if (f.meta.has(":noapi")) return false;
+        if (f.meta.has(":noapi_" + language)) return false;
         if (f.meta.has(":compilerGenerated")) return false;
         
         if (f.name.startsWith("get_") || f.name.startsWith("set_"))
@@ -296,7 +298,7 @@ class Processor
 	{
 		if (c == null || c.isPrivate) return false;
 		
-        if (c.meta.exists(x -> x.name == ":noapi")) return false;
+        if (c.meta.exists(x -> x.name == ":noapi") || c.meta.exists(x -> x.name == ":noapi_" + language)) return false;
 
 		var fullName = c.pack.concat([c.name]).join(".");
 
@@ -326,7 +328,7 @@ class Processor
 			pack : klass.pack,
 			name : Tools.getShortClassName(klass.module),
 			params : e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
-			sub : klass.module == Tools.getFullClassName(klass) ? null : klass.name,
+			sub : klass.module == Tools.getFullClassName(klass.pack, klass.name) ? null : klass.name,
 		};
 	}
 	
@@ -507,10 +509,10 @@ class Processor
 		{
 			case Type.TAnonymous(a):
 				var fields = a.get().fields
-					.filter(function(f) return !f.meta.has(":noapi") && f.isPublic)
+					.filter(f -> !f.meta.has(":noapi") && !f.meta.has(":noapi_" + language) && f.isPublic)
 					.map(classFieldToField.bind(null, false))
 					.map(function(f) { f.doc = f.doc; return f; });
-				for (f in fields) f.access = f.access.filter(function(a) return a != Access.APublic && a != Access.APrivate);
+				for (f in fields) f.access = f.access.filter(a -> a != Access.APublic && a != Access.APrivate);
 				return ComplexType.TAnonymous(fields);
 				
 			case _:

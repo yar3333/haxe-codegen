@@ -27,7 +27,7 @@ export namespace pack_a
 		static play(src:string, interrupt?:string, delay?:number, offset?:number, loop?:number, volume?:number, pan?:number, startTime?:number, duration?:number) : string;
 	}
 	
-	export class TestGeneric extends root_pack.pack_a.TestGeneric.TestBaseGeneric<root_pack.pack_a.TestClassC>
+	export class TestGeneric extends pack_a.TestGeneric.TestBaseGeneric<root_pack.pack_a.TestClassC>
 	{
 	
 	}

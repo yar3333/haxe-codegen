@@ -64,7 +64,7 @@ class Tools
 		{
 			var pack = Path.withoutDirectory(tt.module.replace(".", "/")) == tt.name ? tt.pack.join(".") : tt.module;
 			if (packs.exists(pack)) packs.get(pack).push(tt);
-			else packs.set(pack, [tt]);
+			else                    packs.set(pack, [tt]);
 		}
 		
 		return packs;
@@ -129,9 +129,17 @@ class Tools
                     if (tt.meta.has(":native"))
                     {
                         var nativeMeta = tt.meta.get().find(x -> x.name == ":native");
-                        r.push({ from:getFullClassName(tt), to:ExprTools.getValue(nativeMeta.params[0]) });
+                        r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(nativeMeta.params[0]) });
                     }
-
+                    else
+                    if (tt.meta.has(":expose"))
+                    {
+                        var exposeMeta = tt.meta.get().find(x -> x.name == ":expose");
+                        if (exposeMeta.params.length > 0)
+                        {
+                            r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(exposeMeta.params[0]) });
+                        }
+                    }
                 case _:
             }
 		}
@@ -149,7 +157,9 @@ class Tools
 			if (mappings.length > 0)
 			{
 				var mapping = mappings[mappings.length - 1];
-				var to = (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(type).substring(mapping.from.length + 1);
+				var to = ~/^[A-Z]|\.[A-Z]/.match(mapping.to)
+                    ? mapping.to
+                    : (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(type).substring(mapping.from.length + 1);
 				var oldModule = type.module;
 				applyFullTypeNameToTypeDefinition(to, type);
 				if (type.module != oldModule) modules.set(oldModule, type.module);
@@ -162,18 +172,18 @@ class Tools
 		}
 	}
 	
-	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, module:String)
+	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, nodeModule:String)
 	{
 		for (tt in types)
 		{
 			switch (tt.kind)
 			{
 				case TypeDefKind.TDClass(_, _, _), TypeDefKind.TDEnum:
-					var metas = tt.meta.filter(function(m) return m.name == ":jsRequire");
-					if (metas.length == 0)
+					if (!tt.meta.exists(x-> x.name == ":jsRequire"))
 					{
-                        var fullName = (tt.pack != null && tt.pack.length > 0 ? tt.pack.join(".") + "." : "") + tt.name;
-						tt.meta.push({	name:":jsRequire", params:[ macro $v{module}, macro $v{fullName} ], pos:null });
+                        var expose = tt.meta.find(x-> x.name == ":expose");
+                        var fullName = expose != null ? ExprTools.getValue(expose.params[0]) : Tools.getFullClassName(tt.pack, tt.name);                     
+						tt.meta.push({	name:":jsRequire", params:[ macro $v{nodeModule}, macro $v{fullName} ], pos:null });
 					}
 					
 				case _:
@@ -196,16 +206,16 @@ class Tools
 		return n < 0 ? fullClassName : fullClassName.substring(n + 1);
 	}
 	
-	public static function getFullClassName(klass:ClassType) : String
+	public static function getFullClassName(pack:Array<String>, name:String) : String
 	{
-		return klass.pack.concat([klass.name]).join(".");
+		return pack.concat([name]).join(".");
 	}
 	
 	static function getFullTypeName(tt:{ module:String, name:String }) : String
 	{
 		if (tt.module == tt.name) return tt.name;
 		if (tt.module.endsWith("." + tt.name)) return tt.module;
-		return tt.module + "." + tt.name;
+		return (tt.module!="" ? tt.module + "." : "") + tt.name;
 	} 
 	
 	static function applyFullTypeNameToTypeDefinition(fullTypeName:String, type:TypeDefinitionEx) : Void

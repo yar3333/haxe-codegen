@@ -33,8 +33,14 @@ class Patcher
 					
 				case TypeDefKind.TDAlias(t):
 					processComplexType(t);
-					
-				case TypeDefKind.TDClass(_, _, _): // nothing to do
+
+                case TypeDefKind.TDClass(superClass, interfaces, isInterface, isFinal, isAbstract):
+                    if (customProcessTypePath != null)
+                    {
+                        if (superClass != null) customProcessTypePath(superClass);
+                        if (interfaces != null) for (i in interfaces) customProcessTypePath(i);
+                    }
+				
 				case TypeDefKind.TDEnum: // nothing to do
 				case TypeDefKind.TDStructure: // nothing to do
                 case TypeDefKind.TDField(_, ): // nothing to do

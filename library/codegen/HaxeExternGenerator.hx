@@ -6,6 +6,8 @@ using StringTools;
 
 class HaxeExternGenerator implements IGenerator
 {
+    public var language(default, never) = "haxe";
+
 	static var stdTypeMetasToRemove =
 	[
 		":expose"
@@ -15,17 +17,17 @@ class HaxeExternGenerator implements IGenerator
 	[
 		":has_untyped",
 		":maybeUsed",
-		":value"
+		":value",
+        ":noapi_typescript",
+        ":property"
 	];
 	
-	var outPackage : String;
 	var outPath : String;
 	var badTypeMetas : Array<String>;
 	var badFieldMetas : Array<String>;
 	
-	public function new(outPackage:String, outPath:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
+	public function new(outPath:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
 	{
-		this.outPackage = outPackage;
 		this.outPath = outPath;
 		this.badTypeMetas = stdTypeMetasToRemove.concat(typeMetasToRemove);
 		this.badFieldMetas = stdFieldMetasToRemove.concat(fieldMetasToRemove);
@@ -61,13 +63,11 @@ class HaxeExternGenerator implements IGenerator
 				);
 			}
 
-            var prefixedModule = (outPackage != null && outPackage != "" ? outPackage + "." : "") + module;
-			
-			var pack = Path.directory(prefixedModule.replace(".", "/")).replace("/", ".");
+			var pack = Path.directory(module.replace(".", "/")).replace("/", ".");
 			
 			Tools.saveFileContent
 			(
-				outPath + "/" + prefixedModule.replace(".", "/") + ".hx",
+				outPath + "/" + module.replace(".", "/") + ".hx",
 				(pack != "" ? "package " + pack + ";\n\n" : "") + texts.join("\n\n")
 			);
 		}
