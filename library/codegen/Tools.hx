@@ -118,19 +118,24 @@ class Tools
 		}
 	}
 	
-	public static function extractNativesMapper(types:Array<TypeDefinitionEx>) : Array<{ from:String, to:String }>
+	public static function extractNativesMapper(types:Array<Type>) : Array<{ from:String, to:String }>
 	{
 		var r = new Array<{ from:String, to:String }>();
 		
-		for (tt in types)
+		for (type in types)
 		{
-			var native = tt.meta.filter(function(m) return m.name == ":native");
-			if (native.length > 0)
+			switch (type)
 			{
-				var to = ExprTools.getValue(native[native.length - 1].params[0]);
-				r.push({ from:getFullTypeName(tt), to:to });
-				tt.meta = tt.meta.filter(function(m) return m.name != ":native");
-			}
+                case TInst(t, params):
+                    var tt = t.get();
+                    if (tt.meta.has(":native"))
+                    {
+                        var nativeMeta = tt.meta.get().find(x -> x.name == ":native");
+                        r.push({ from:getFullClassName(tt), to:ExprTools.getValue(nativeMeta.params[0]) });
+                    }
+
+                case _:
+            }
 		}
 		
 		return r;

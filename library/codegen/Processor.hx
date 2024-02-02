@@ -67,7 +67,7 @@ class Processor
                 }
 			}
 
-			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(typeDefs));
+			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(types));
 			
 			if (requireNodeModule != null && requireNodeModule != "")
             {

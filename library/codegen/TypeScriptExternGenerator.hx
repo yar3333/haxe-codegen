@@ -15,9 +15,8 @@ class TypeScriptExternGenerator implements IGenerator
 		"Dynamic" => "any",
 		"Void" => "void",
 		"String" => "string",
-		"js.html.DocumentFragment" => "DocumentFragment",
-		"js.lib.Map" => "Map",
         "Class" => "any",
+        "haxe.extern.EitherType" => "any",
 	];
 	
 	var outPath : String;

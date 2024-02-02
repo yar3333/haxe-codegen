@@ -3,12 +3,12 @@
 	"tasks": [
         {
             "type": "hxml",
-            "file": "build.hxml",
+            "file": "test.hxml",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "label": "hxml: build.hxml",
+            "label": "hxml: test.hxml",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
