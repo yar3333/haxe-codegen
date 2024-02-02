@@ -10,8 +10,6 @@ class HaxeExternGenerator implements IGenerator
 {
 	static var stdTypeMetasToRemove =
 	[
-		":build",
-		":autoBuild",
 		":expose"
 	];
 	
