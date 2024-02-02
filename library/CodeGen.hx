@@ -11,7 +11,7 @@ class CodeGen
 	
 	static var filters = new Array<String>();
 	static var mappers = new Array<{ from:String, to:String }>();
-	
+
 	public static function includePrivateMembers()
 	{
         includePrivate = true;

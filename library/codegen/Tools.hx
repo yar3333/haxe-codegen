@@ -143,22 +143,22 @@ class Tools
 	{
 		var modules = new Map<String, String>();
 		
-		for (tt in types)
+		for (type in types)
 		{
-			var mappings = mapper.filter(function(m) return (getFullTypeName(tt) + ".").startsWith(m.from + "."));
+			var mappings = mapper.filter(x -> (getFullTypeName(type) + ".").startsWith(x.from + "."));
 			if (mappings.length > 0)
 			{
 				var mapping = mappings[mappings.length - 1];
-				var to = (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(tt).substring(mapping.from.length + 1);
-				var oldModule = tt.module;
-				applyFullTypeNameToTypeDefinition(to, tt);
-				if (tt.module != oldModule) modules.set(oldModule, tt.module);
+				var to = (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(type).substring(mapping.from.length + 1);
+				var oldModule = type.module;
+				applyFullTypeNameToTypeDefinition(to, type);
+				if (type.module != oldModule) modules.set(oldModule, type.module);
 			}
 		}
 		
-		for (tt in types)
+		for (type in types)
 		{
-			if (modules.exists(tt.module)) tt.module = modules.get(tt.module);
+			if (modules.exists(type.module)) type.module = modules.get(type.module);
 		}
 	}
 	
@@ -208,25 +208,25 @@ class Tools
 		return tt.module + "." + tt.name;
 	} 
 	
-	static function applyFullTypeNameToTypeDefinition(s:String, tt:TypeDefinitionEx) : Void
+	static function applyFullTypeNameToTypeDefinition(fullTypeName:String, type:TypeDefinitionEx) : Void
 	{
-		var p = s.split(".");
+		var p = fullTypeName.split(".");
 		if (p.length == 1)
 		{
-			tt.module = s;
-			tt.pack = [];
+			type.module = fullTypeName;
+			type.pack = [];
 		}
 		else
 		if (~/^A-Z/.match(p[p.length - 2]))
 		{
-			tt.module = p.slice(0, p.length - 1).join(".");
-			tt.pack = p.slice(0, p.length - 2);
+			type.module = p.slice(0, p.length - 1).join(".");
+			type.pack = p.slice(0, p.length - 2);
 		}
 		else
 		{
-			tt.module = s;
-			tt.pack = p.slice(0, p.length - 1);
+			type.module = fullTypeName;
+			type.pack = p.slice(0, p.length - 1);
 		}
-		tt.name = p[p.length - 1];
+		type.name = p[p.length - 1];
 	}
 }

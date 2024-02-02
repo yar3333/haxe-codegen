@@ -236,7 +236,6 @@ class Processor
             var prop = fields.find(x -> x.name == propName);
             if (prop != null)
             {
-                //Context.warning("prop found: " + prop.name, Context.currentPos());
                 if (Context.defined("jsprop") && prop.meta.has(":property")) return false;
             }
         }
