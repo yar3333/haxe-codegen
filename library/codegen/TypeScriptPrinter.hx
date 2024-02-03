@@ -2,6 +2,7 @@ package codegen;
 
 import haxe.macro.Expr;
 using Lambda;
+using StringTools;
 
 class TypeScriptPrinter {
 	var tabs:String;
@@ -88,10 +89,10 @@ class TypeScriptPrinter {
 		case TPath(tp): printTypePath(tp);
 		case TFunction(args, ret):
 			"(" + (args.length > 0 ? args.mapi(function(i, arg) return "arg" + (args.length > 1 ? Std.string(i) : "") + ":" + printComplexType(arg)).join(", ") : "") + ") => " + printComplexType(ret);
-		case TAnonymous(fields): "{ " + [for (f in fields) printField(f) + "; "].join("") + "}";
+		case TAnonymous(fields): "{ " + fields.filter(isIncludeField).map(x -> printField(x) + "; ").join("") + "}";
 		case TParent(ct): "(" + printComplexType(ct) + ")";
 		case TOptional(ct): "?" + printComplexType(ct);
-		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.map(printField).join(", ")} }';
+		case TExtend(tpl, fields): '{> ${tpl.map(printTypePath).join(" >, ")}, ${fields.filter(isIncludeField).map(printField).join(", ")} }';
         case TIntersection(tl): "" + [for (t in tl) printComplexType(t)].join(" & ") + "";
         case TNamed(n, t): printComplexType(t);
 	}
@@ -146,6 +147,15 @@ class TypeScriptPrinter {
 		case AOverload: "overload";
 	}
 
+    function isIncludeField(field:Field)
+    {
+        return switch (field.kind)
+        {
+            case FProp(g, s): g  != "get" || s != "set";
+            case _: true;
+        }
+    }
+
 	public function printField(field:Field) return
 		printDoc(field.doc)
 		+ printMetadatas(field.meta, "\n" + tabs, field)
@@ -154,8 +164,8 @@ class TypeScriptPrinter {
 		  case FVar(t, eo): field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = ");
 		  case FProp(get, set, t, eo):
 				var a = [];
-				if (get == "get") a.push("get_" + field.name + "()"                                       + opt(t, printComplexType, " : "));
-				if (set == "set") a.push("set_" + field.name + "(v" + opt(t, printComplexType, ":") + ")" + opt(t, printComplexType, " : "));
+				//if (get == "get") a.push("get_" + field.name + "()"                                       + opt(t, printComplexType, " : "));
+				//if (set == "set") a.push("set_" + field.name + "(v" + opt(t, printComplexType, ":") + ")" + opt(t, printComplexType, " : "));
 				if (get == "default" || set == "default") a.push(field.name + opt(t, printComplexType, " : ") + opt(eo, printExpr, " = "));
 				a.join("\n " +tabs);
 		  case FFun(func): field.name + printFunction(func);
@@ -258,12 +268,12 @@ class TypeScriptPrinter {
 
 	function printExtension(tpl:Array<TypePath>, fields: Array<Field>) {
 		return '{\n$tabs>' + tpl.map(printTypePath).join(',\n$tabs>') + ","
-		    + (fields.length > 0 ? ('\n$tabs' + fields.map(printField).join(';\n$tabs') + ";\n}") : ("\n}"));
+		    + (fields.length > 0 ? ('\n$tabs' + fields.filter(isIncludeField).map(printField).join(';\n$tabs') + ";\n}") : ("\n}"));
 	}
 
 	function printStructure(fields:Array<Field>) {
 		return fields.length == 0 ? "{ }" :
-			'{\n$tabs' + fields.map(printField).join(';\n$tabs') + ";\n}";
+			'{\n$tabs' + fields.filter(isIncludeField).map(printField).join(';\n$tabs') + ";\n}";
 	}
 
 	public function printTypeDefinition(t:TypeDefinition, printPackage = true):String {
@@ -290,18 +300,15 @@ class TypeScriptPrinter {
 					+ "\n}";
 				case TDStructure:
 					"interface " + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "") + "\n{\n"
-					+ [for (f in t.fields) {
-						tabs + printField(f) + ";";
-					}].join("\n")
+					+ t.fields.filter(isIncludeField).map(f -> tabs + printField(f) + ";").join("\n")
 					+ "\n}";
 				case TDClass(superClass, interfaces, isInterface):
 					(isInterface ? "interface " : "class ") + t.name + (t.params.length > 0 ? "<" + t.params.map(printTypeParamDecl).join(", ") + ">" : "")
 					+ (superClass != null ? " extends " + printTypePath(superClass) : "")
 					+ (interfaces != null && interfaces.length>0 ? (isInterface ? [for (tp in interfaces) " extends " + printTypePath(tp)].join("") : " implements " + interfaces.map(printTypePath).join(", ")) : "")
 					+ "\n{\n"
-					+ [for (f in t.fields) {
-						var fstr = printField(f);
-						tabs + fstr + switch(f.kind) {
+					+ [for (f in t.fields.filter(isIncludeField)) {
+						tabs + printField(f) + switch(f.kind) {
 							case FVar(_, _), FProp(_, _, _, _): ";";
 							case FFun(func) if (func.expr == null): ";";
 							case _: "";
@@ -322,9 +329,8 @@ class TypeScriptPrinter {
 					+ (from == null ? "" : [for (f in from) " from " + printComplexType(f)].join(""))
 					+ (to == null ? "" : [for (t in to) " to " + printComplexType(t)].join(""))
 					+ "\n{\n"
-					+ [for (f in t.fields) {
-						var fstr = printField(f);
-						tabs + fstr + switch(f.kind) {
+					+ [for (f in t.fields.filter(isIncludeField)) {
+						tabs + printField(f) + switch(f.kind) {
 							case FVar(_, _), FProp(_, _, _, _): ";";
 							case FFun(func) if (func.expr == null): ";";
 							case _: "";
