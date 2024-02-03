@@ -126,6 +126,7 @@ class Tools
 			{
                 case TInst(t, params): extractNativesMapperInner(t.get(), r);
                 case TType(t, params): extractNativesMapperInner(t.get(), r);
+                case TEnum(t, params): extractNativesMapperInner(t.get(), r);
                 case _:
             }
 		}

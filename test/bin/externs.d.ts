@@ -1,12 +1,3 @@
-export namespace root_pack.pack_a
-{
-	export enum TestEnum
-	{
-		LikeVar,
-		LikeFunc(a:number)
-	}
-}
-
 export namespace pack_a
 {
 	export class TestClassC
@@ -14,6 +5,12 @@ export namespace pack_a
 		constructor();
 		linkA : pack_a.TestClassC;
 		linkB : RootClass;
+	}
+	
+	export enum TestEnum
+	{
+		LikeVar,
+		LikeFunc(a:number)
 	}
 	
 	export class TestExtern

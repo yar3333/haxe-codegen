@@ -55,15 +55,15 @@ class Processor
                     forceExposeForType(type);
                     typeDefs.push(tt);
                     
-                    if (!tt.isInterface)
-                    {
-                        switch (type)
-                        {
-                            case TInst(t, _): addRttiPathMeta(t.get());
-                            case TEnum(t, _): addRttiPathMeta(t.get());
-                            case _:
-                        }
-                    }   
+                    // if (!tt.isInterface)
+                    // {
+                    //     switch (type)
+                    //     {
+                    //         case TInst(t, _): addRttiPathMeta(t.get());
+                    //         case TEnum(t, _): addRttiPathMeta(t.get());
+                    //         case _:
+                    //     }
+                    // }   
                 }
 			}
 
@@ -102,28 +102,24 @@ class Processor
 
     private function forceExposeForType(type:Type) : Void
     {
-        switch (type)
+        var klass: BaseType = switch (type)
         {
-            case TInst(t, params): 
-                var klass = t.get();
-                if (!klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
-                
-            case TType(t, params): 
-                var klass = t.get();
-                if (!klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
-                    
-            case _:
+            case TInst(t, params): t.get();
+            case TType(t, params): t.get();
+            case TEnum(t, params): t.get();
+            case _: null;
         }
+        if (klass != null && !klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
     }
 
-    private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String })
-    {
-        if (t.meta.get().exists(x -> x.name == ":rtti") && !t.meta.get().exists(x -> x.name == "rtti.path"))
-        {
-            var rttiPath = t.pack.concat([ t.name ]).join(".");
-            t.meta.add("rtti.path", [ macro $v{rttiPath} ], t.meta.get().find(x -> x.name == ":rtti").pos);
-        }
-    }
+    // private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String })
+    // {
+    //     if (t.meta.get().exists(x -> x.name == ":rtti") && !t.meta.get().exists(x -> x.name == "rtti.path"))
+    //     {
+    //         var rttiPath = t.pack.concat([ t.name ]).join(".");
+    //         t.meta.add("rtti.path", [ macro $v{rttiPath} ], t.meta.get().find(x -> x.name == ":rtti").pos);
+    //     }
+    // }
 	
 	function processType(type:Type, includePrivate:Bool) : TypeDefinitionEx
 	{

@@ -10,7 +10,7 @@ class Patcher
 	
 	public static function run(types:Array<TypeDefinitionEx>, ?customProcessTypePath:TypePath->ComplexType, ?customProcessField:Field->Void)
 	{
-		var instance = new Patcher(customProcessTypePath, customProcessField);
+		var instance = new Patcher(customProcessTypePath ?? x -> null, customProcessField ?? x -> {});
 		instance.process(types);
 	}
 	
@@ -35,11 +35,8 @@ class Patcher
 					processComplexType(t);
 
                 case TypeDefKind.TDClass(superClass, interfaces, isInterface, isFinal, isAbstract):
-                    if (customProcessTypePath != null)
-                    {
-                        if (superClass != null) customProcessTypePath(superClass);
-                        if (interfaces != null) for (i in interfaces) customProcessTypePath(i);
-                    }
+                    if (superClass != null) customProcessTypePath(superClass);
+                    if (interfaces != null) for (i in interfaces) customProcessTypePath(i);
 				
 				case TypeDefKind.TDEnum: // nothing to do
 				case TypeDefKind.TDStructure: // nothing to do
@@ -99,7 +96,7 @@ class Patcher
 	
 	function processField(field:Field)
 	{
-		if (customProcessField != null) customProcessField(field);
+		customProcessField(field);
 		
 		if (field.kind == null) return;
 		
@@ -135,15 +132,12 @@ class Patcher
 	
 	function processTypePath(tp:TypePath) : ComplexType
 	{
-		if (customProcessTypePath != null)
-		{
-			var r = customProcessTypePath(tp);
-			if (r != null)
-			{
-				var r2 = processComplexType(r);
-				return r2 != null ? r2 : r;
-			}
-		}
+        var r = customProcessTypePath(tp);
+        if (r != null)
+        {
+            var r2 = processComplexType(r);
+            return r2 != null ? r2 : r;
+        }
 		
 		processTypeParams(tp.params);
 		return null;

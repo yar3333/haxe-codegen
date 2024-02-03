@@ -1,5 +1,5 @@
+import haxe.macro.Type.BaseType;
 import haxe.macro.Context;
-import haxe.macro.Compiler;
 import codegen.Tools;
 import codegen.Manager;
 using StringTools;
@@ -81,23 +81,18 @@ class CodeGen
         {
             for (type in types)
             {
-                switch (type)
+                var klass: BaseType = switch (type)
                 {
-                    case TInst(t, params):
-                        var klass = t.get();
-                        if (Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + "."))
-                        {
-                            var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
-                            klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
-                        }                    
-                    case TType(t, params):
-                        var klass = t.get();
-                        if (Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + "."))
-                        {
-                            var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
-                            klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
-                        }
-                    case _:
+                    case TInst(t, params): t.get();
+                    case TType(t, params): t.get();
+                    case TEnum(t, params): t.get();
+                    case TAbstract(t, params): t.get();
+                    case _: null;
+                };
+                if (klass != null && Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + "."))
+                {
+                    var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
+                    klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
                 }
             }
         });
