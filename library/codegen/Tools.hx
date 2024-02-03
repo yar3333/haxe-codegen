@@ -124,28 +124,32 @@ class Tools
 		{
 			switch (type)
 			{
-                case TInst(t, params):
-                    var tt = t.get();
-                    if (tt.meta.has(":native"))
-                    {
-                        var nativeMeta = tt.meta.get().find(x -> x.name == ":native");
-                        r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(nativeMeta.params[0]) });
-                    }
-                    else
-                    if (tt.meta.has(":expose"))
-                    {
-                        var exposeMeta = tt.meta.get().find(x -> x.name == ":expose");
-                        if (exposeMeta.params.length > 0)
-                        {
-                            r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(exposeMeta.params[0]) });
-                        }
-                    }
+                case TInst(t, params): extractNativesMapperInner(t.get(), r);
+                case TType(t, params): extractNativesMapperInner(t.get(), r);
                 case _:
             }
 		}
 		
 		return r;
 	}
+
+    static function extractNativesMapperInner(tt:{ meta:MetaAccess, pack:Array<String>, name:String }, r: Array<{ from:String, to:String }>) : Void
+    {
+        if (tt.meta.has(":native"))
+        {
+            var nativeMeta = tt.meta.get().find(x -> x.name == ":native");
+            r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(nativeMeta.params[0]) });
+        }
+        else
+        if (tt.meta.has(":expose"))
+        {
+            var exposeMeta = tt.meta.get().find(x -> x.name == ":expose");
+            if (exposeMeta.params.length > 0)
+            {
+                r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(exposeMeta.params[0]) });
+            }
+        }
+    }
 	
 	public static function mapTypeDefs(types:Array<TypeDefinitionEx>, mapper:Array<{ from:String, to:String }>)
 	{

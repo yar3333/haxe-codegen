@@ -108,6 +108,10 @@ class Processor
                 var klass = t.get();
                 if (!klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
                 
+            case TType(t, params): 
+                var klass = t.get();
+                if (!klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
+                    
             case _:
         }
     }

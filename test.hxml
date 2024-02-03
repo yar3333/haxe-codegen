@@ -1,10 +1,9 @@
 --js test/bin/index.js
 --class-path library
 --class-path test/src
---library utest
 --main Main
 --macro include('root_pack')
 --macro CodeGen.include('root_pack')
 --macro CodeGen.includePrivateMembers()
---macro CodeGen.map('root_pack','')
+--macro CodeGen.exposeToRoot('root_pack')
 --macro CodeGen.typescriptExtern('test/bin/externs.d.ts')

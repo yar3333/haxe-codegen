@@ -87,7 +87,14 @@ class CodeGen
                         var klass = t.get();
                         if (Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + "."))
                         {
-                            var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name) ;
+                            var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
+                            klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
+                        }                    
+                    case TType(t, params):
+                        var klass = t.get();
+                        if (Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + "."))
+                        {
+                            var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
                             klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
                         }
                     case _:
