@@ -34,6 +34,7 @@ class TypeScriptExternGenerator implements IGenerator
 		Tools.removeInlineMethods(types);
         Tools.makeGetterSetterPublic(types);
         Tools.removeFictiveProperties(types);
+        Tools.overloadsToFields(types);
 
 		Patcher.run
 		(

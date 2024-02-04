@@ -12,7 +12,7 @@ using Lambda;
 
 class Tools
 {
-	public static function markAsExtern(types:Array<TypeDefinitionEx>)
+	public static function markAsExtern(types:Array<TypeDefinitionEx>) : Void
 	{
 		for (tt in types)
 		{
@@ -30,7 +30,7 @@ class Tools
 		}
 	}
 	
-	public static function removeInlineMethods(types:Array<TypeDefinitionEx>)
+	public static function removeInlineMethods(types:Array<TypeDefinitionEx>) : Void
 	{
 		for (tt in types)
 		{
@@ -44,7 +44,7 @@ class Tools
 		}
 	}
 
-    public static function overloadsToMeta(types:Array<TypeDefinitionEx>)
+    public static function overloadsToMeta(types:Array<TypeDefinitionEx>) : Void
     {
 		for (tt in types)
         {
@@ -64,7 +64,6 @@ class Tools
                                 }
                             }
                         }
-                        tt.fields = tt.fields.filter(f -> !f.access.has(Access.AInline));
                     }
                 case _:
             };
@@ -77,7 +76,7 @@ class Tools
         return { name: ":overload", params: [ { expr:EFunction(FunctionKind.FAnonymous, f), pos: method.pos } ], pos: method.pos };
     }
 
-	public static function makeGetterSetterPublic(types:Array<TypeDefinitionEx>)
+	public static function makeGetterSetterPublic(types:Array<TypeDefinitionEx>) : Void
 	{
 		for (tt in types)
 		{
@@ -98,7 +97,7 @@ class Tools
 		}
 	}
 
-	public static function removeFictiveProperties(types:Array<TypeDefinitionEx>)
+	public static function removeFictiveProperties(types:Array<TypeDefinitionEx>) : Void
     {
 		for (tt in types)
         {
@@ -143,7 +142,7 @@ class Tools
 		return packs;
 	}
 	
-	public static function saveFileContent(path:String, content:String)
+	public static function saveFileContent(path:String, content:String) : Void
 	{
 		var dir = Path.directory(path);
 		if (dir != "" && !FileSystem.exists(dir)) FileSystem.createDirectory(dir);
@@ -174,7 +173,7 @@ class Tools
 		tp.sub = null;
 	}
 	
-	public static function mapType(mapper:Array<{ from:String, to:String }>, tp:TypePath)
+	public static function mapType(mapper:Array<{ from:String, to:String }>, tp:TypePath) : Void
 	{
 		var from = Tools.typePathToString(tp);
 		
@@ -226,7 +225,7 @@ class Tools
         }
     }
 	
-	public static function mapTypeDefs(types:Array<TypeDefinitionEx>, mapper:Array<{ from:String, to:String }>)
+	public static function mapTypeDefs(types:Array<TypeDefinitionEx>, mapper:Array<{ from:String, to:String }>) : Void
 	{
 		var modules = new Map<String, String>();
 		
@@ -251,7 +250,7 @@ class Tools
 		}
 	}
 	
-	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, nodeModule:String)
+	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, nodeModule:String) : Void
 	{
 		for (tt in types)
 		{
@@ -270,7 +269,7 @@ class Tools
 		}
 	}
 	
-	public static function removeFieldMeta(field:Field, meta:String)
+	public static function removeFieldMeta(field:Field, meta:String) : Void
 	{
 		var i = 0; while (i < field.meta.length)
 		{
@@ -324,5 +323,27 @@ class Tools
         var r = a.copy();
         for (kv in b.keyValueIterator()) r.set(kv.key, kv.value);
         return r;
+    }
+
+    public static function overloadsToFields(types:Array<TypeDefinitionEx>) : Void
+    {
+        for (tt in types)
+        {
+            switch (tt.kind)
+            {
+                case TypeDefKind.TDClass(_, _, _):
+                    var fields  = new Array<Field>();
+                    for (field in tt.fields)
+                    {
+                        if (tt.methodOverloads.exists(field.name))
+                        {
+                            fields = fields.concat(tt.methodOverloads.get(field.name));
+                        }
+                        fields.push(field);
+                    }
+                    tt.fields = fields;
+                case _:
+            };
+        }
     }
 }
