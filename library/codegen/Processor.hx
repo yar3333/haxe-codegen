@@ -107,6 +107,7 @@ class Processor
             case TInst(t, params): t.get();
             case TType(t, params): t.get();
             case TEnum(t, params): t.get();
+            case TAbstract(t, params): t.get();
             case _: null;
         }
         if (klass != null && !klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);

@@ -13,6 +13,8 @@ export namespace pack_a
 		LikeFunc(a:number)
 	}
 	
+	type TestEnumAbstract = string;
+	
 	export class TestExtern
 	{
 		static play(src:string, options:number) : string;
@@ -33,6 +35,13 @@ export namespace pack_a
 	{
 		get_myProp() : any;
 		set_myProp(v:any) : any;
+	}
+	
+	type TestTypedef =
+	{
+		a : number;
+		b : string;
+		c : pack_a.TestClassC;
 	}
 }
 

@@ -6,4 +6,5 @@
 --macro CodeGen.include('root_pack')
 --macro CodeGen.includePrivateMembers()
 --macro CodeGen.exposeToRoot('root_pack')
+--macro CodeGen.haxeExtern('test/bin/haxe', "my-npm")
 --macro CodeGen.typescriptExtern('test/bin/externs.d.ts')
