@@ -8,5 +8,6 @@ typedef TypeDefinitionEx =
 	doc : String,
 	module : String,
 	isPrivate : Bool,
-	isInterface : Bool
+	isInterface : Bool,
+    methodOverloads: Map<String, Array<Field>>,
 }

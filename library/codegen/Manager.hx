@@ -25,7 +25,7 @@ class Manager
             Sys.println("");
 		}
 		
-		preserveOverloads();
+		//preserveOverloads();
 		
 		filter = filter.concat(filterFile != null ? File.getContent(filterFile).replace("\r\n", "\n").replace("\r", "\n").split("\n") : []);
 		

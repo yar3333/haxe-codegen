@@ -1,5 +1,6 @@
 package codegen;
 
+import haxe.macro.Context;
 import haxe.io.Path;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
@@ -42,6 +43,39 @@ class Tools
 			};
 		}
 	}
+
+    public static function overloadsToMeta(types:Array<TypeDefinitionEx>)
+    {
+		for (tt in types)
+        {
+            switch (tt.kind)
+            {
+                case TypeDefKind.TDClass(_, _, _):
+                    for (field in tt.fields)
+                    {
+                        if (tt.methodOverloads.exists(field.name))
+                        {
+                            for (m in tt.methodOverloads.get(field.name))
+                            {
+                                switch (m.kind) 
+                                {
+                                    case FFun(f): field.meta.push(overloadToMeta(m, f));
+                                    case _:
+                                }
+                            }
+                        }
+                        tt.fields = tt.fields.filter(f -> !f.access.has(Access.AInline));
+                    }
+                case _:
+            };
+        }
+    }
+
+    static function overloadToMeta(method:Field, f:Function) : MetadataEntry
+    {
+        f.expr = macro {};
+        return { name: ":overload", params: [ { expr:EFunction(FunctionKind.FAnonymous, f), pos: method.pos } ], pos: method.pos };
+    }
 
 	public static function makeGetterSetterPublic(types:Array<TypeDefinitionEx>)
 	{
@@ -284,4 +318,11 @@ class Tools
 		}
 		type.name = p[p.length - 1];
 	}
+
+    public static function concatMaps<K, V>(a:Map<K, V>, b:Map<K, V>) : Map<K, V>
+    {
+        var r = a.copy();
+        for (kv in b.keyValueIterator()) r.set(kv.key, kv.value);
+        return r;
+    }
 }

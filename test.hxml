@@ -1,7 +1,7 @@
---js test/bin/index.js
+--neko dummy.n
+--no-output
 --class-path library
 --class-path test/src
---main Main
 --macro include('root_pack')
 --macro CodeGen.include('root_pack')
 --macro CodeGen.includePrivateMembers()

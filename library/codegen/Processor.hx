@@ -151,9 +151,12 @@ class Processor
 					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDClass(getTypePath(c.superClass), c.interfaces.map(getTypePath), c.isInterface),
-					fields : instanceFields.map(classFieldToField.bind(c, false)).concat(staticFields.map(classFieldToField.bind(c, true))),
+					fields : instanceFields.map(x -> classFieldToField(c, false, x))
+                       .concat(staticFields.map(x -> classFieldToField(c, true,  x))),
 					isPrivate : c.isPrivate,
-                    isInterface: c.isInterface
+                    isInterface : c.isInterface,
+                    methodOverloads : Tools.concatMaps(getMethodOverloadsAsMap(c, false, instanceFields),
+                                                       getMethodOverloadsAsMap(c, true, staticFields)),
 				};
 				
 			case Type.TEnum(t, params):
@@ -177,7 +180,8 @@ class Processor
 						.map(enumFieldToField)
 						.array(),
 					isPrivate : c.isPrivate,
-                    isInterface : false
+                    isInterface : false,
+                    methodOverloads : null,
 				};
 				
 			case Type.TType(t, params):
@@ -198,7 +202,8 @@ class Processor
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
 					fields : null,
 					isPrivate : c.isPrivate,
-                    isInterface : false
+                    isInterface : false,
+                    methodOverloads : null,
 				};
 				
 			case Type.TAbstract(t, params):
@@ -219,13 +224,21 @@ class Processor
 					kind : TypeDefKind.TDAlias(typeToComplexType(c.type)),
 					fields : [], //c.constructs.map(enumFieldToField).array()
 					isPrivate : c.isPrivate,
-                    isInterface : false
+                    isInterface : false,
+                    methodOverloads : null,
 				};
 				
 			case _:
 				return null;
 		}
 	}
+
+    function getMethodOverloadsAsMap(klass:ClassType, isStatic:Bool, fields:Array<ClassField>) : Map<String, Array<Field>>
+    {
+        var r = new Map<String, Array<Field>>();
+        for (f in fields) r.set(f.name, f.overloads.get().map(x -> classFieldToField(klass, isStatic, x)));
+        return r;
+    }
 	
 	function isIncludeClassField(fields:Array<ClassField>, f:ClassField, includePrivate:Bool) : Bool
 	{
@@ -240,6 +253,7 @@ class Processor
             if (prop != null)
             {
                 if (Context.defined("jsprop") && prop.meta.has(":property")) return false;
+                return true;
             }
         }
         
@@ -291,7 +305,8 @@ class Processor
 			kind : TypeDefKind.TDClass(null, null, false),
 			fields : [],
 			isPrivate : c.isPrivate,
-            isInterface : false
+            isInterface : false,
+            methodOverloads : null,
 		};
 	}
 	
@@ -369,7 +384,7 @@ class Processor
 			access : getAccesses(klass, isStatic , f),
 			kind : getFieldKind(f),
 			pos : Context.currentPos(),
-			meta : meta
+			meta : meta,
 		};
 	}
 	

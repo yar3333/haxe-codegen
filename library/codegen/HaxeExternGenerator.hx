@@ -42,6 +42,7 @@ class HaxeExternGenerator implements IGenerator
 		
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);
+        Tools.overloadsToMeta(types);
 		
 		Patcher.run
 		(

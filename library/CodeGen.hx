@@ -26,9 +26,9 @@ class CodeGen
 	}
 	
 	public static function exclude(pack:String)
-        {
-            for (p in splitValues(pack)) filters.push("-" + p);
-        }
+    {
+        for (p in splitValues(pack)) filters.push("-" + p);
+    }
         
 	public static function removeTypeMeta(meta:String)
 	{

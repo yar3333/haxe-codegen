@@ -45,6 +45,8 @@ class Patcher
 			
 			if (type.fields != null) type.fields.iter(processField);
 			type.params.iter(processTypeParamDecl);
+            
+            if (type.methodOverloads != null) for (_ => v in type.methodOverloads) v.iter(processField);
 		}
 	}
 	
