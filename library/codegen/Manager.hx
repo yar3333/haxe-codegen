@@ -10,18 +10,18 @@ class Manager
 {
 	public static var platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
 	
-	public static function generate(generator:IGenerator, applyNatives:Bool, filterFile:String, mapperFile:String, includePrivate:Bool, requireNodeModule:String, filter:Array<String>, mapper:Array<{ from:String, to:String }>, verbose:Bool) : Void
+	public static function generate(generator:IGenerator, filterFile:String, mapperFile:String, includePrivate:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, verbose:Bool) : Void
 	{
 		if (filter == null) filter = [];
 		if (mapper == null) mapper = [];
+        includePrivate = !!includePrivate;
 		
 		if (verbose)
 		{
-			Sys.println("applyNatives: " + applyNatives);
-			Sys.println("includePrivate: " + (!!includePrivate));
-			Sys.println("requireNodeModule: " + (requireNodeModule != null ? requireNodeModule : "-"));
-			Sys.println("filterFile: " + (filterFile != null ? filterFile : "-"));
-			Sys.println("mapperFile: " + (mapperFile != null ? mapperFile : "-"));
+			Sys.println("includePrivate: " + includePrivate);
+			if (generator.nodeModule != null && generator.nodeModule != "") Sys.println("nodeModule: " + generator.nodeModule);
+			if (filterFile != null && filterFile != "") Sys.println("filterFile: " + filterFile);
+			if (mapperFile != null && mapperFile != "") Sys.println("mapperFile: " + mapperFile);
             Sys.println("");
 		}
 		
@@ -59,7 +59,7 @@ class Manager
 			}
 		}
 		
-		new codegen.Processor(generator, applyNatives, filter, mapper, true, includePrivate, requireNodeModule);
+		new codegen.Processor(generator, filter, mapper, true, includePrivate);
 	}
 	
 	static function preserveOverloads() : Void

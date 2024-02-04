@@ -9,7 +9,7 @@ Compile your haxe project with `-lib codegen` and one of the generation macro:
 
 ```shell
 # generate haxe extern classes:
---macro CodeGen.haxeExtern(?requireNodeModule,?outPackage,?outPath,?filterFile,?mapperFile)
+--macro CodeGen.haxeExtern(?outPath,?nodeModule,?filterFile,?mapperFile)
 
 # generate typescript extern classes:
 --macro CodeGen.typescriptExtern(?outPath,?filterFile,?mapperFile)
@@ -17,9 +17,8 @@ Compile your haxe project with `-lib codegen` and one of the generation macro:
  
 Arguments details:
 
- * requireNodeModule - module name to generate `@:jsRequire` meta (for **haxeExtern**);
- * outPackage - output package name to generate (for **haxeExtern**);
  * outPath - path to output directory (for **haxeExtern**) or output file (for **typescriptExtern**);
+ * nodeModule - used to generate `@:jsRequire` meta for exposed classes (for **haxeExtern**);
  * filterFile - path to a text file with lines prefixed with "+" to include or "-" to exclude specified package/type (one per line);
  * mapperFile - path to a text file with lines in 'FromType => ToType' format (use to map types).
 
@@ -48,11 +47,15 @@ mypack.MyTypeB => mypack.MyType2
 
 ### Additional options ###
 By default CodeGen produce externs for types included for compilation and marked with `@:expose` meta.
-You can use `@:noapi` to force type excluding if type in included package. Also `@:noapi` works for fields.
+You can use `@:noapi` to force type/field excluding.
+To customize generation process, use next compiler options before `CodeGen.haxeExtern` / `CodeGen.typescriptExtern`:
 
 ```shell
 # use to include private class members into output
 --macro CodeGen.includePrivateMembers()
+
+# add @:expose for all classes inside specified package and subpackages
+--macro CodeGen.exposeToRoot('mypack')
 
 # include myPackA and myPackB.MyClass into generation
 --macro CodeGen.include('myPackA myPackB.MyClass')

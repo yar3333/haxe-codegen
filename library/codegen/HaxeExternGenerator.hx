@@ -7,6 +7,8 @@ using StringTools;
 class HaxeExternGenerator implements IGenerator
 {
     public var language(default, never) = "haxe";
+    public var isApplyNatives(default, never) = false;
+    public var nodeModule(default, null): String;
 
 	static var stdTypeMetasToRemove =
 	[
@@ -26,9 +28,10 @@ class HaxeExternGenerator implements IGenerator
 	var badTypeMetas : Array<String>;
 	var badFieldMetas : Array<String>;
 	
-	public function new(outPath:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
+	public function new(outPath:String, nodeModule:String, typeMetasToRemove:Array<String>, fieldMetasToRemove:Array<String>)
 	{
 		this.outPath = outPath;
+		this.nodeModule = nodeModule;
 		this.badTypeMetas = stdTypeMetasToRemove.concat(typeMetasToRemove);
 		this.badFieldMetas = stdFieldMetasToRemove.concat(fieldMetasToRemove);
 	}

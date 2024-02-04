@@ -45,7 +45,7 @@ class CodeGen
 		mappers.push({ from:from, to:to });
 	}
 	
-	public static function haxeExtern(?outPath:String, ?requireNodeModule:String, ?filterFile:String, ?mapperFile:String) : Void
+	public static function haxeExtern(?outPath:String, ?nodeModule:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
 		
@@ -55,8 +55,8 @@ class CodeGen
 			Sys.println("outPath: " + outPath);
 		}
 		
-        var generator = new codegen.HaxeExternGenerator(outPath, typeMetasToRemove, fieldMetasToRemove);
-		Manager.generate(generator, false, filterFile, mapperFile, includePrivate, requireNodeModule, filters, mappers, verbose);
+        var generator = new codegen.HaxeExternGenerator(outPath, nodeModule, typeMetasToRemove, fieldMetasToRemove);
+		Manager.generate(generator, filterFile, mapperFile, includePrivate, filters, mappers, verbose);
 	}
 	
 	public static function typescriptExtern(?outPath:String, ?filterFile:String, ?mapperFile:String) : Void
@@ -70,7 +70,7 @@ class CodeGen
 		}
 		
         var generator = new codegen.TypeScriptExternGenerator(outPath);
-		Manager.generate(generator, true, filterFile, mapperFile, includePrivate, null, filters, mappers, verbose);
+		Manager.generate(generator, filterFile, mapperFile, includePrivate, filters, mappers, verbose);
 	}
 
     public static function exposeToRoot(pack:String) : Void

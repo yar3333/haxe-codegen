@@ -24,15 +24,15 @@ export namespace pack_a
 		protected myFunc(obj:MyT) : void;
 	}
 	
-	export class TestGeneric extends pack_a.TestGeneric.TestBaseGeneric<root_pack.pack_a.TestClassC>
+	export class TestGeneric extends pack_a.TestGeneric.TestBaseGeneric<pack_a.TestClassC>
 	{
 	
 	}
 	
 	export class TestProperty
 	{
-		protected get_myProp() : any;
-		protected set_myProp(v:any) : any;
+		get_myProp() : any;
+		set_myProp(v:any) : any;
 	}
 }
 

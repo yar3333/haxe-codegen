@@ -6,6 +6,8 @@ using StringTools;
 class TypeScriptExternGenerator implements IGenerator
 {
     public var language(default, never) = "typescript";
+    public var isApplyNatives(default, never) = true;
+    public var nodeModule(default, null): String = null;
 
 	static var typeMap =
 	[
@@ -30,35 +32,29 @@ class TypeScriptExternGenerator implements IGenerator
 	{
 		Tools.markAsExtern(types);
 		Tools.removeInlineMethods(types);
-		
+        Tools.makeGetterSetterPublic(types);
+        Tools.removeFictiveProperties(types);
+
 		Patcher.run
 		(
 			types,
 			
-			function(tp)
+			(tp:TypePath) ->
 			{
 				var to = typeMap.get(Tools.typePathToString(tp));
 				if (to != null) Tools.stringToTypePath(to, tp);
 				
-				if (to == "any")
-				{
-					tp.params = [];
-				}
+				if (to == "any") tp.params = [];
 				
 				return null;
 			},
 			
-			function(field:Field)
+			(field:Field) ->
 			{
 				if (field.name == "new")
 				{
 					field.name = "constructor";
-					switch (field.kind)
-					{
-						case FieldType.FFun(f):
-							f.ret = null;
-						case _:
-					}
+					switch (field.kind)	{ case FieldType.FFun(f): f.ret = null; case _: }
 				}
 			}
 		);

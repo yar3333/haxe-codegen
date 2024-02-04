@@ -25,7 +25,7 @@ class Processor
 	var filter : Array<String>;
     var language: String;
 	
-	public function new(generator:IGenerator, applyNatives:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool, requireNodeModule:String) 
+	public function new(generator:IGenerator, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool) 
 	{
 		if (filter == null || filter.length == 0) filter = [];
 		if (mapper == null) mapper = [];
@@ -67,11 +67,11 @@ class Processor
                 }
 			}
 
-			if (applyNatives) mapper = mapper.concat(Tools.extractNativesMapper(types));
+			if (generator.isApplyNatives) mapper = mapper.concat(Tools.extractNativesMapper(types));
 			
-			if (requireNodeModule != null && requireNodeModule != "")
+			if (generator.nodeModule != null && generator.nodeModule != "")
             {
-                Tools.addJsRequireMeta(typeDefs.filter(x -> !x.isInterface), requireNodeModule);
+                Tools.addJsRequireMeta(typeDefs.filter(x -> !x.isInterface), generator.nodeModule);
             }
 
 			Tools.mapTypeDefs(typeDefs, mapper);

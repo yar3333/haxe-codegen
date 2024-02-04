@@ -19,7 +19,7 @@ class Tools
 			{
 				case TypeDefKind.TDClass(_, _, isInterface):
 					if (!isInterface) tt.isExtern = true;
-					for (f in tt.fields) f.access = f.access.filter(function(a) return a != Access.APublic);
+					for (f in tt.fields) f.access = f.access.filter(a -> a != Access.APublic);
 					
 				case TypeDefKind.TDEnum:
 					tt.isExtern = true;
@@ -36,13 +36,52 @@ class Tools
 			switch (tt.kind)
 			{
 				case TypeDefKind.TDClass(_, _, _):
-					tt.fields = tt.fields.filter(function(f) return !f.access.has(Access.AInline));
+					tt.fields = tt.fields.filter(f -> !f.access.has(Access.AInline));
 					
 				case _:
 			};
 		}
 	}
-	
+
+	public static function makeGetterSetterPublic(types:Array<TypeDefinitionEx>)
+	{
+		for (tt in types)
+		{
+			switch (tt.kind)
+			{
+				case TypeDefKind.TDClass(_, _, _):
+                    for (f in tt.fields)
+                    {
+                        if ((f.name.startsWith("get_") || f.name.startsWith("set_")) && tt.fields.exists(x -> x.name == f.name.substr(4) && !(x.access ?? []).contains(APrivate)))
+                        {
+                            f.access = f.access.filter(x -> x != APrivate);
+                            f.access.push(APublic);
+                        }
+                    }
+					
+				case _:
+			};
+		}
+	}
+
+	public static function removeFictiveProperties(types:Array<TypeDefinitionEx>)
+    {
+		for (tt in types)
+        {
+            switch (tt.kind)
+            {
+                case TypeDefKind.TDClass(_, _, _):
+                    tt.fields = tt.fields.filter(f -> switch (f.kind)
+                    {
+                        case FProp(get, set): get != "get" || set != "set";
+                        case _: true;
+                    });
+                    
+                case _:
+            };
+        }
+    }
+        
 	public static function separateByModules(types:Array<TypeDefinitionEx>) : Map<String, Array<TypeDefinitionEx>>
 	{
 		var modules = new Map<String, Array<TypeDefinitionEx>>();
