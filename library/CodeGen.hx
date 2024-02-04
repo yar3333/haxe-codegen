@@ -73,7 +73,7 @@ class CodeGen
 		Manager.generate(generator, filterFile, mapperFile, includePrivate, filters, mappers, verbose);
 	}
 
-    public static function exposeToRoot(pack:String) : Void
+    public static function exposeToRoot(pack:String, ?recursive:Bool = true) : Void
     {
         var packArr = pack.split(".");
 
@@ -89,7 +89,9 @@ class CodeGen
                     case TAbstract(t, params): t.get();
                     case _: null;
                 };
-                if (klass != null && Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + "."))
+                if (klass == null) continue;
+                    
+                if (recursive && Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + ".") || klass.pack.join(".") == pack)
                 {
                     var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
                     klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
