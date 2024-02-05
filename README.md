@@ -74,4 +74,7 @@ To customize generation process, use next compiler options before `CodeGen.haxeE
 
 # cleanup: remove `@mymeta` from output (fields)
 --macro CodeGen.removeFieldMeta('mymeta')
+
+# copy specified module to output as is (for typescript ignored)
+--macro CodeGen.copyAfterGeneration("mypack.MyClass")
 ```

@@ -1,3 +1,5 @@
+import haxe.io.Path;
+import sys.io.File;
 import haxe.macro.Compiler;
 import haxe.macro.Type.BaseType;
 import haxe.macro.Context;
@@ -12,6 +14,7 @@ class CodeGen
 	public static var includePrivate = false;
 	public static var typeMetasToRemove = new Array<String>();
 	public static var fieldMetasToRemove = new Array<String>();
+    public static var modulesToCopy = new Array<String>();
 	
 	static var filters = new Array<String>();
 	static var mappers = new Array<{ from:String, to:String }>();
@@ -46,7 +49,12 @@ class CodeGen
 		mappers.push({ from:from, to:to });
 	}
 	
-	public static function haxeExtern(?outPath:String, ?nodeModule:String, ?filterFile:String, ?mapperFile:String) : Void
+    public static function copyAfterGeneration(module:String)
+    {
+        if (modulesToCopy.indexOf(module) < 0) modulesToCopy.push(module);
+    }
+
+    public static function haxeExtern(?outPath:String, ?nodeModule:String, ?filterFile:String, ?mapperFile:String) : Void
 	{
 		if (outPath == null || outPath == "") outPath = "hxclasses";
 		
@@ -58,6 +66,8 @@ class CodeGen
 		
         var generator = new codegen.HaxeExternGenerator(outPath, nodeModule, typeMetasToRemove, fieldMetasToRemove);
 		Manager.generate(generator, filterFile, mapperFile, includePrivate, filters, mappers, verbose);
+
+        Context.onAfterGenerate(() -> doCopyStep(outPath));
 	}
 	
 	public static function typescriptExtern(?outPath:String, ?filterFile:String, ?mapperFile:String) : Void
@@ -101,6 +111,20 @@ class CodeGen
                 }
             }
         });
+    }
+
+    static function doCopyStep(dstDir:String)
+    {
+        for (module in modulesToCopy)
+        {
+            var srcFilePath = Context.resolvePath(module.replace(".", "/") + ".hx");
+            if (srcFilePath == null)
+            {
+                Context.warning("Module to copy is not found: '" + module + "'.", Context.currentPos());
+                continue;
+            }
+            File.copy(srcFilePath, Path.join([ dstDir, module.replace(".", "/") + ".hx" ]));
+        }
     }
 
 	static function splitValues(s:String) : Array<String>

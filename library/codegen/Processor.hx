@@ -27,7 +27,13 @@ class Processor
 	
 	public function new(generator:IGenerator, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool) 
 	{
-		this.filter = filter;
+		filter.sort((a, b) -> {
+            var na = a.split(".").length;
+            var nb = b.split(".").length;
+            return na < nb ? 1 : (na > nb ? -1 : (a < b ? -1 : (a > b ? 1 : 0)));
+        });
+        
+        this.filter = filter;
 		this.language = generator.language;
 		
 		for (key in stdTypes.keys())
@@ -225,7 +231,7 @@ class Processor
             if (prop != null)
             {
                 if (Context.defined("jsprop") && prop.meta.has(":property")) return false;
-                return true;
+                return isIncludeClassField(fields, prop, includePrivate);
             }
         }
         
@@ -288,21 +294,13 @@ class Processor
 		
         if (c.meta.exists(x -> x.name == ":noapi") || c.meta.exists(x -> x.name == ":noapi_" + language)) return false;
 
-		var fullName = c.pack.concat([c.name]).join(".");
-
-        for (s in filter.filter(x -> x.startsWith("-")))
+		var fullName = Tools.getFullClassName(c.pack, c.name);
+        for (s in filter)
         {
-            if (fullName == s.substring(1) || fullName.startsWith(s.substring(1) + ".")) return false;
+            if (fullName == s.substring(1) || fullName.startsWith(s.substring(1) + ".")) return s.startsWith("+");
         }
-    
-        if (c.meta.exists(x -> x.name == ":expose")) return true;
 
-        for (s in filter.filter(x -> x.startsWith("+")))
-        {
-            if (s == "+*" || fullName == s.substring(1) || fullName.startsWith(s.substring(1) + ".")) return true;
-        }
-    
-		return false;
+		return c.meta.exists(x -> x.name == ":expose");
 	}
 	
 	function getTypePath(e:Null<{ t:Ref<ClassType>, params:Array<Type> }>) : TypePath

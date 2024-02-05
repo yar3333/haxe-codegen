@@ -1,6 +1,5 @@
 package codegen;
 
-import haxe.macro.Context;
 import haxe.io.Path;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
