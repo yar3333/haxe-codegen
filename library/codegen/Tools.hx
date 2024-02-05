@@ -235,7 +235,7 @@ class Tools
 			if (mappings.length > 0)
 			{
 				var mapping = mappings[mappings.length - 1];
-				var to = ~/^[A-Z]|\.[A-Z]/.match(mapping.to)
+				var to = isFullNameHasModule(mapping.to)
                     ? mapping.to
                     : (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(type).substring(mapping.from.length + 1);
 				var oldModule = type.module;
@@ -249,6 +249,11 @@ class Tools
 			if (modules.exists(type.module)) type.module = modules.get(type.module);
 		}
 	}
+
+    public static function isFullNameHasModule(fullName:String) : Bool
+    {
+        return ~/^[A-Z]|\.[A-Z]/.match(fullName);
+    }
 	
 	public static function addJsRequireMeta(types:Array<TypeDefinitionEx>, nodeModule:String) : Void
 	{

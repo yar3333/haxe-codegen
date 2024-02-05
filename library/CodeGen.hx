@@ -1,3 +1,4 @@
+import haxe.macro.Compiler;
 import haxe.macro.Type.BaseType;
 import haxe.macro.Context;
 import codegen.Tools;
@@ -75,6 +76,8 @@ class CodeGen
 
     public static function exposeToRoot(pack:String, ?recursive:Bool = true) : Void
     {
+        Compiler.include(pack, recursive);
+        
         var packArr = pack.split(".");
 
         Context.onGenerate(types ->

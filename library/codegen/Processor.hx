@@ -27,20 +27,11 @@ class Processor
 	
 	public function new(generator:IGenerator, filter:Array<String>, mapper:Array<{ from:String, to:String }>, isUnpackNull:Bool, includePrivate:Bool) 
 	{
-		if (filter == null || filter.length == 0) filter = [];
-		if (mapper == null) mapper = [];
-
-        filter = filter.map(x -> x.trim()).filter(x -> x != "" && !x.startsWith("//") && !x.startsWith("#"));
-		
 		this.filter = filter;
 		this.language = generator.language;
 		
-		mapper = mapper.copy();
-		mapper.reverse();
-		
 		for (key in stdTypes.keys())
 		{
-			filter.push("-" + key);
 			mapper.push({ from:key, to:stdTypes.get(key) });
 		}
 		
@@ -54,16 +45,6 @@ class Processor
                 {
                     forceExposeForType(type);
                     typeDefs.push(tt);
-                    
-                    // if (!tt.isInterface)
-                    // {
-                    //     switch (type)
-                    //     {
-                    //         case TInst(t, _): addRttiPathMeta(t.get());
-                    //         case TEnum(t, _): addRttiPathMeta(t.get());
-                    //         case _:
-                    //     }
-                    // }   
                 }
 			}
 
@@ -112,15 +93,6 @@ class Processor
         }
         if (klass != null && !klass.meta.has(":expose")) klass.meta.add(":expose", [], klass.pos);
     }
-
-    // private function addRttiPathMeta(t: { meta:MetaAccess, pack:Array<String>, name:String })
-    // {
-    //     if (t.meta.get().exists(x -> x.name == ":rtti") && !t.meta.get().exists(x -> x.name == "rtti.path"))
-    //     {
-    //         var rttiPath = t.pack.concat([ t.name ]).join(".");
-    //         t.meta.add("rtti.path", [ macro $v{rttiPath} ], t.meta.get().find(x -> x.name == ":rtti").pos);
-    //     }
-    // }
 	
 	function processType(type:Type, includePrivate:Bool) : TypeDefinitionEx
 	{

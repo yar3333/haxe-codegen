@@ -2,8 +2,6 @@
 --no-output
 --class-path library
 --class-path test/src
---macro include('root_pack')
---macro CodeGen.include('root_pack')
 --macro CodeGen.includePrivateMembers()
 --macro CodeGen.exposeToRoot('root_pack')
 --macro CodeGen.haxeExtern('test/bin/haxe', "my-npm")
