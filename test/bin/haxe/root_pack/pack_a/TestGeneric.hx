@@ -1,6 +1,6 @@
 package root_pack.pack_a;
 
-@:jsRequire("my-npm", "pack_a.TestBaseGeneric") extern class TestBaseGeneric<MyT> {
+@:jsRequire("my-npm", "pack_a.TestGeneric.TestBaseGeneric") extern class TestBaseGeneric<MyT> {
 	private function myFunc(obj:MyT):Void;
 }
 

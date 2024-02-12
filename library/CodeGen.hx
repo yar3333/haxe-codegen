@@ -104,9 +104,9 @@ class CodeGen
                 };
                 if (klass == null) continue;
                     
-                if (recursive && Tools.getFullClassName(klass.pack, klass.name).startsWith(pack + ".") || klass.pack.join(".") == pack)
+                if (recursive && Tools.getFullTypeName(klass.name, klass.module).startsWith(pack + "."))
                 {
-                    var newName = Tools.getFullClassName(klass.pack.slice(packArr.length), klass.name);
+                    var newName = Tools.getFullTypeName(klass.name, klass.module.split(".").slice(packArr.length).join("."));
                     klass.meta.add(":expose", [ macro $v{newName} ], klass.pos);
                 }
             }

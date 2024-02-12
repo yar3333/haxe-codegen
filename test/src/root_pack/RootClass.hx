@@ -7,3 +7,7 @@ class RootClass
 		
 	}
 }
+
+typedef MySubTypeInRootClass =
+{
+}

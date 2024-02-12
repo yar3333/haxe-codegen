@@ -7,7 +7,7 @@ using StringTools;
 
 class Manager
 {
-	public static var platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
+	public static final platforms = [ "cpp", "cs", "flash", "java", "js", "neko", "php", "python" ];
 	
 	public static function generate(generator:IGenerator, filterFile:String, mapperFile:String, includePrivate:Bool, filter:Array<String>, mapper:Array<{ from:String, to:String }>, verbose:Bool) : Void
 	{
@@ -54,12 +54,12 @@ class Manager
 					}
 					else
 					{
-						Context.fatalError("Mapper: bad type format '" + s+ "'.", Context.currentPos());
+						Context.fatalError("Mapper: bad type format '" + s + "'.", Context.currentPos());
 					}
 				}
 				else
 				{
-					Context.fatalError("Mapper: bad type format '" + s+ "'.", Context.currentPos());
+					Context.fatalError("Mapper: bad type format '" + s + "'.", Context.currentPos());
 				}
 			}
 		}

@@ -206,12 +206,12 @@ class Tools
 		return r;
 	}
 
-    static function extractNativesMapperInner(tt:{ meta:MetaAccess, pack:Array<String>, name:String }, r: Array<{ from:String, to:String }>) : Void
+    static function extractNativesMapperInner(tt:{ meta:MetaAccess, pack:Array<String>, name:String, module:String }, r: Array<{ from:String, to:String }>) : Void
     {
         if (tt.meta.has(":native"))
         {
             var nativeMeta = tt.meta.get().find(x -> x.name == ":native");
-            r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(nativeMeta.params[0]) });
+            r.push({ from:getFullTypeName(tt.name, tt.module), to:ExprTools.getValue(nativeMeta.params[0]) });
         }
         else
         if (tt.meta.has(":expose"))
@@ -219,7 +219,7 @@ class Tools
             var exposeMeta = tt.meta.get().find(x -> x.name == ":expose");
             if (exposeMeta.params.length > 0)
             {
-                r.push({ from:getFullClassName(tt.pack, tt.name), to:ExprTools.getValue(exposeMeta.params[0]) });
+                r.push({ from:getFullTypeName(tt.name, tt.module), to:ExprTools.getValue(exposeMeta.params[0]) });
             }
         }
     }
@@ -230,13 +230,13 @@ class Tools
 		
 		for (type in types)
 		{
-			var mappings = mapper.filter(x -> (getFullTypeName(type) + ".").startsWith(x.from + "."));
+			var mappings = mapper.filter(x -> (getFullTypeName(type.name, type.module) + ".").startsWith(x.from + "."));
 			if (mappings.length > 0)
 			{
 				var mapping = mappings[mappings.length - 1];
 				var to = isFullNameHasModule(mapping.to)
                     ? mapping.to
-                    : (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(type).substring(mapping.from.length + 1);
+                    : (mapping.to != "" ? mapping.to + "." : "") + getFullTypeName(type.name, type.module).substring(mapping.from.length + 1);
 				var oldModule = type.module;
 				applyFullTypeNameToTypeDefinition(to, type);
 				if (type.module != oldModule) modules.set(oldModule, type.module);
@@ -264,7 +264,7 @@ class Tools
 					if (!tt.meta.exists(x-> x.name == ":jsRequire"))
 					{
                         var expose = tt.meta.find(x-> x.name == ":expose");
-                        var fullName = expose != null ? ExprTools.getValue(expose.params[0]) : Tools.getFullClassName(tt.pack, tt.name);                     
+                        var fullName = expose != null ? ExprTools.getValue(expose.params[0]) : Tools.getFullTypeName(tt.name, tt.module);                     
 						tt.meta.push({	name:":jsRequire", params:[ macro $v{nodeModule}, macro $v{fullName} ], pos:null });
 					}
 					
@@ -282,23 +282,17 @@ class Tools
 		}
 	}
 	
-	public static function getShortClassName(fullClassName:String) : String
+	public static function getShortTypeName(fullClassName:String) : String
 	{
 		var n = fullClassName.lastIndexOf(".");
 		return n < 0 ? fullClassName : fullClassName.substring(n + 1);
 	}
 	
-	public static function getFullClassName(pack:Array<String>, name:String) : String
+	public static function getFullTypeName(name:String, module:String) : String
 	{
-		return pack.concat([name]).join(".");
+		if (getShortTypeName(module) == name) return module;
+		return module + "." + name;
 	}
-	
-	static function getFullTypeName(tt:{ module:String, name:String }) : String
-	{
-		if (tt.module == tt.name) return tt.name;
-		if (tt.module.endsWith("." + tt.name)) return tt.module;
-		return (tt.module!="" ? tt.module + "." : "") + tt.name;
-	} 
 	
 	static function applyFullTypeNameToTypeDefinition(fullTypeName:String, type:TypeDefinitionEx) : Void
 	{

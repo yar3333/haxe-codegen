@@ -107,7 +107,7 @@ class Processor
 			case Type.TInst(t, params):
 				var c = t.get();
 				
-				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get(), module: c.module })) return createStube(c);
 				
 				var instanceFields = c.constructor != null ? [ c.constructor.get() ] : [];
 				instanceFields = instanceFields.concat(c.fields.get());
@@ -140,7 +140,7 @@ class Processor
 			case Type.TEnum(t, params):
 				var c = t.get();
 				
-				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get(), module:c.module })) return createStube(c);
 				
 				return
 				{
@@ -165,7 +165,7 @@ class Processor
 			case Type.TType(t, params):
 				var c = t.get();
 				
-				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get(), module:c.module })) return createStube(c);
 
 				return
 				{
@@ -187,7 +187,7 @@ class Processor
 			case Type.TAbstract(t, params):
 				var c = t.get();
 				
-				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get() })) return createStube(c);
+				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get(), module:c.module })) return createStube(c);
 				
 				return
 				{
@@ -288,13 +288,13 @@ class Processor
 		};
 	}
 	
-	function isIncludeType(c:{ isPrivate:Bool, pack:Array<String>, name:String, meta:Metadata }) : Bool
+	function isIncludeType(c:{ isPrivate:Bool, pack:Array<String>, name:String, meta:Metadata, module:String }) : Bool
 	{
 		if (c == null || c.isPrivate) return false;
 		
         if (c.meta.exists(x -> x.name == ":noapi") || c.meta.exists(x -> x.name == ":noapi_" + language)) return false;
 
-		var fullName = Tools.getFullClassName(c.pack, c.name);
+		var fullName = Tools.getFullTypeName(c.name, c.module);
         for (s in filter)
         {
             if (fullName == s.substring(1) || fullName.startsWith(s.substring(1) + ".")) return s.startsWith("+");
@@ -312,9 +312,9 @@ class Processor
 		return
 		{
 			pack : klass.pack,
-			name : Tools.getShortClassName(klass.module),
+			name : Tools.getShortTypeName(klass.module),
 			params : e.params.map(function(p) return TypeParam.TPType(typeToComplexType(p))),
-			sub : klass.module == Tools.getFullClassName(klass.pack, klass.name) ? null : klass.name,
+			sub : klass.module == Tools.getFullTypeName(klass.name, klass.module) ? null : klass.name,
 		};
 	}
 	

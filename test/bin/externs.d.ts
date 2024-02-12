@@ -45,6 +45,12 @@ export namespace pack_a
 	}
 }
 
+export namespace RootClass
+{
+	type MySubTypeInRootClass =
+	{ }
+}
+
 export class RootClass
 {
 	constructor();
