@@ -23,26 +23,27 @@ Arguments details:
  * mapperFile - path to a text file with lines in 'FromType => ToType' format (use to map types).
 
 ### Example build.hxml ###
-```bash
+```
 --library mylib 
 --classpath src
 --main Main
 --js dummy.js
 --library codegen
---macro CodeGen.haxeExtern('mynpmmodule','mypackA.mypackB', 'out')
+--macro CodeGen.haxeExtern('out','my-npm-module')
 ```
+
 **Filter** file example:
-```bash
+```
 +mypack
 # comment
 -mypack.ClassToExclude
 ```
+
 **Mapper** file example:
-```bash
+```
 mypack.MyTypeA => mypack.MyType1
 # comment
 mypack.MyTypeB => mypack.MyType2
-
 ```
 
 ### Additional options ###
@@ -50,7 +51,7 @@ By default CodeGen produce externs for types included for compilation and marked
 You can use `@:noapi` to force type/field excluding.
 To customize generation process, use next compiler options before `CodeGen.haxeExtern` / `CodeGen.typescriptExtern`:
 
-```shell
+```
 # use to include private class members into output
 --macro CodeGen.includePrivateMembers()
 
