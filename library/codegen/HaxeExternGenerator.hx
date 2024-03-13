@@ -12,7 +12,8 @@ class HaxeExternGenerator implements IGenerator
 
 	static var stdTypeMetasToRemove =
 	[
-		":expose"
+		":expose",
+        ":flatEnum",
 	];
 	
 	static var stdFieldMetasToRemove =

@@ -344,4 +344,11 @@ class Tools
             };
         }
     }
+
+    public static function orderBy<T, E>(arr:Iterable<T>, fieldSelector:T->E) : Array<T>
+    {
+        final r = arr.array();
+        r.sort((a, b) -> Reflect.compare(fieldSelector(a), fieldSelector(b)));
+        return r;
+    }
 }

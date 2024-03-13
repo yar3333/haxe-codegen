@@ -141,7 +141,7 @@ class Processor
 				var c = t.get();
 				
 				if (!isIncludeType({ isPrivate:c.isPrivate, pack:c.pack, name:c.name, meta:c.meta.get(), module:c.module })) return createStube(c);
-				
+
 				return
 				{
 					doc : c.doc,
@@ -153,10 +153,8 @@ class Processor
 					params : c.params.map(typeParameterToTypeParamDec),
 					isExtern : c.isExtern,
 					kind : TypeDefKind.TDEnum,
-					fields : c.constructs
-						.filter(x -> !x.meta.has(":noapi") && !x.meta.has(":noapi_" + language))
-						.map(enumFieldToField)
-						.array(),
+					fields : Tools.orderBy(c.constructs, x -> x.index)
+						          .map(enumFieldToField),
 					isPrivate : c.isPrivate,
                     isInterface : false,
                     methodOverloads : null,
@@ -381,7 +379,7 @@ class Processor
 					case _:
 						Context.fatalError("Enum field '" + f.name + "' unexpected type '" + f.type + "'.", f.pos);
 				},
-			pos : Context.currentPos(),
+			pos : f.pos,
 			meta : f.meta.get()
 		};
 	}
